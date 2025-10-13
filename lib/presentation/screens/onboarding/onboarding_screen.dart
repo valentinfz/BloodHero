@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:bloodhero/presentation/screens/auth/login_screen.dart';
 import 'package:bloodhero/presentation/widgets/primary_button.dart';
 
-
 class OnboardingScreen extends StatefulWidget {
   static const String name = 'onboarding_screen';
 
@@ -38,8 +37,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Se añaden los iconos a la información de cada slide
   final slides = const <_SlideInfo>[
-    _SlideInfo('Bienvenido', 'Encontrá centros y doná fácil', Icons.place_outlined),
-    _SlideInfo('Ranking', 'Doná para subir de nivel', Icons.leaderboard_outlined),
+    _SlideInfo(
+      'Bienvenido',
+      'Encontrá centros y doná fácil',
+      Icons.place_outlined,
+    ),
+    _SlideInfo(
+      'Ranking',
+      'Doná para subir de nivel',
+      Icons.leaderboard_outlined,
+    ),
     _SlideInfo('Impacto', 'Salvá vidas con tu aporte', Icons.favorite_border),
   ];
 
@@ -51,11 +58,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           PageView(
             controller: pageController,
             children: slides
-                .map((slideData) => _Slide(
-                      title: slideData.title,
-                      caption: slideData.caption,
-                      icon: slideData.icon, // Se pasa el icono al widget
-                    ))
+                .map(
+                  (slideData) => _Slide(
+                    title: slideData.title,
+                    caption: slideData.caption,
+                    icon: slideData.icon, // Se pasa el icono al widget
+                  ),
+                )
                 .toList(),
           ),
           Positioned(
@@ -75,7 +84,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 }
               },
             ),
-          )
+          ),
         ],
       ),
     );
@@ -88,9 +97,9 @@ class _Slide extends StatelessWidget {
   final IconData icon; // Se añade el icono como parámetro
 
   const _Slide({
-    required this.title, 
-    required this.caption, 
-    required this.icon
+    required this.title,
+    required this.caption,
+    required this.icon,
   });
 
   @override
@@ -113,11 +122,7 @@ class _Slide extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               // Se muestra el icono dentro del contenedor
-              child: Icon(
-                icon,
-                size: 100,
-                color: Colors.grey[400],
-              ),
+              child: Icon(icon, size: 100, color: Colors.grey[400]),
             ),
             const SizedBox(height: 50),
             Text(title, style: titleStyle),

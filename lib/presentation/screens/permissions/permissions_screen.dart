@@ -49,7 +49,8 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
     return Scaffold(
       body: PageView.builder(
         controller: pageController,
-        physics: const NeverScrollableScrollPhysics(), // Para evitar deslizar manualmente
+        physics:
+            const NeverScrollableScrollPhysics(), // Para evitar deslizar manualmente
         itemCount: slides.length,
         itemBuilder: (context, index) {
           final slide = slides[index];
@@ -97,12 +98,20 @@ class _PermissionSlide extends StatelessWidget {
               color: Colors.grey[200],
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Icon(Icons.shield_outlined, size: 100, color: Colors.grey[400]),
+            child: Icon(
+              Icons.shield_outlined,
+              size: 100,
+              color: Colors.grey[400],
+            ),
           ),
           const SizedBox(height: 50),
           Text(title, style: textTheme.titleLarge, textAlign: TextAlign.center),
           const SizedBox(height: 10),
-          Text(subtitle, style: textTheme.bodyMedium, textAlign: TextAlign.center),
+          Text(
+            subtitle,
+            style: textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
           const Spacer(flex: 3),
           PrimaryButton(
             text: buttonText,

@@ -6,6 +6,7 @@ import 'package:bloodhero/presentation/screens/auth/register_screen.dart';
 import 'package:bloodhero/presentation/screens/permissions/permissions_screen.dart';
 import 'package:bloodhero/presentation/screens/home/home_screen.dart';
 import 'package:bloodhero/presentation/screens/appointments/citas_screen.dart';
+import 'package:bloodhero/presentation/screens/profile/profile_screen.dart';
 
 // GoRouter configuration
 final appRouter = GoRouter(
@@ -41,11 +42,15 @@ final appRouter = GoRouter(
       name: HomeScreen.name,
       builder: (context, state) => const HomeScreen(),
     ),
-    // --- AÑADIR NUEVA RUTA ---
     GoRoute(
       path: '/citas',
       name: CitasScreen.name,
       builder: (context, state) => const CitasScreen(),
+    ),
+    GoRoute(
+      path: '/profile',
+      name: ProfileScreen.name,
+      builder: (context, state) => const ProfileScreen(),
     ),
   ],
 );

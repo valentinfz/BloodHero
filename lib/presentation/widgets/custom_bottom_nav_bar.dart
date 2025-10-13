@@ -4,10 +4,7 @@ import 'package:go_router/go_router.dart';
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
 
-  const CustomBottomNavBar({
-    super.key,
-    required this.currentIndex,
-  });
+  const CustomBottomNavBar({super.key, required this.currentIndex});
 
   void _onItemTapped(BuildContext context, int index) {
     final router = GoRouter.of(context);
@@ -31,7 +28,9 @@ class CustomBottomNavBar extends StatelessWidget {
         // router.go('/impact');
         break;
       case 4:
-        // router.go('/profile');
+        if (currentLocation != '/profile') {
+          router.go('/profile');
+        }
         break;
     }
   }
@@ -39,12 +38,9 @@ class CustomBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      // --- PROPIEDADES AÑADIDAS ---
       currentIndex: currentIndex,
       onTap: (index) => _onItemTapped(context, index),
-      type: BottomNavigationBarType.fixed, // Asegura que todos los items se muestren siempre
-      // ----------------------------
-
+      type: BottomNavigationBarType.fixed,
       backgroundColor: Colors.white,
       elevation: 8,
       selectedItemColor: const Color(0xFFC62828),

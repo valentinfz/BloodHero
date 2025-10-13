@@ -1,0 +1,118 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../widgets/custom_bottom_nav_bar.dart';
+import '../../widgets/menu_button.dart';
+import '../auth/login_screen.dart';
+
+class ProfileScreen extends StatelessWidget {
+  static const String name = 'profile_screen';
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Datos de ejemplo
+    const userName = 'Sebastián';
+    const bloodType = 'O-';
+    const ranking = 'Donador leal';
+
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text(
+          'Perfil',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.grey[100],
+        elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            children: [
+              const _UserInfoSection(
+                userName: userName,
+                bloodType: bloodType,
+                ranking: ranking,
+              ),
+              const SizedBox(height: 32),
+              MenuButton(
+                text: 'Editar perfil',
+                onPressed: () {
+                  // TODO: Navegar a la pantalla de edición de perfil
+                },
+                isOutlined: true,
+              ),
+              const SizedBox(height: 16),
+              MenuButton(
+                text: 'Centro de ayuda',
+                onPressed: () {
+                  // TODO: Navegar al centro de ayuda
+                },
+                isOutlined: true,
+              ),
+              const SizedBox(height: 16),
+              MenuButton(
+                text: 'Cerrar sesión',
+                onPressed: () {
+                  context.goNamed(LoginScreen.name);
+                },
+                isOutlined: false,
+                isDestructive: true,
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 4),
+    );
+  }
+}
+
+// Widgets internos de la pantalla de Perfil
+
+class _UserInfoSection extends StatelessWidget {
+  final String userName;
+  final String bloodType;
+  final String ranking;
+
+  const _UserInfoSection({
+    required this.userName,
+    required this.bloodType,
+    required this.ranking,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      children: [
+        const CircleAvatar(
+          radius: 50,
+          backgroundColor: Colors.white,
+          child: Icon(Icons.person, size: 60, color: Colors.grey),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          userName,
+          style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Tipo Sangre: $bloodType',
+          style: textTheme.titleMedium?.copyWith(
+            color: const Color(0xFFC62828),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Ranking: $ranking',
+          style: textTheme.titleMedium?.copyWith(color: Colors.grey[700]),
+        ),
+      ],
+    );
+  }
+}

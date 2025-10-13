@@ -7,9 +7,7 @@ void main() {
   runApp(
     // ProviderScope es el widget que almacena el estado de todos los providers.
     // Es necesario para que Riverpod funcione.
-    const ProviderScope(
-      child: MainApp(),
-    ),
+    const ProviderScope(child: MainApp()),
   );
 }
 

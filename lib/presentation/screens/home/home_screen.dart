@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 import '../../widgets/primary_button.dart';
 
-// --- Modelos de datos hardcodeados (para la UI) ---
+// Modelos de datos hardcodeados (para la UI)
 class Alert {
   final String bloodType;
   final String distance;
@@ -16,7 +16,6 @@ class Appointment {
   final String location;
   Appointment(this.date, this.time, this.location);
 }
-// ----------------------------------------------------
 
 class HomeScreen extends StatelessWidget {
   static const String name = 'home_screen';
@@ -121,10 +120,7 @@ class _NextAppointmentCard extends StatelessWidget {
               children: [
                 const Text(
                   'Próxima donación',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 Text(

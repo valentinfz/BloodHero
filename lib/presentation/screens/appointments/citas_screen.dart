@@ -8,9 +8,7 @@ class CitasScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis Citas'),
-      ),
+      appBar: AppBar(title: const Text('Mis Citas')),
       body: const Center(
         child: Text('Aquí se mostrará la lista de tus citas.'),
       ),

@@ -26,7 +26,10 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(height: 40),
                 const CustomTextFormField(labelText: 'Email'),
                 const SizedBox(height: 20),
-                const CustomTextFormField(labelText: 'Contraseña', obscureText: true),
+                const CustomTextFormField(
+                  labelText: 'Contraseña',
+                  obscureText: true,
+                ),
                 const SizedBox(height: 30),
                 PrimaryButton(
                   text: 'Ingresar',

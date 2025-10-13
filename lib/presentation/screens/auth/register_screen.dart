@@ -12,9 +12,7 @@ class RegisterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Crear cuenta'),
-      ),
+      appBar: AppBar(title: const Text('Crear cuenta')),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -23,11 +21,20 @@ class RegisterScreen extends StatelessWidget {
               children: [
                 const CustomTextFormField(labelText: 'Nombre y apellido'),
                 const SizedBox(height: 15),
-                const CustomTextFormField(labelText: 'Email', keyboardType: TextInputType.emailAddress),
+                const CustomTextFormField(
+                  labelText: 'Email',
+                  keyboardType: TextInputType.emailAddress,
+                ),
                 const SizedBox(height: 15),
-                const CustomTextFormField(labelText: 'Contraseña', obscureText: true),
+                const CustomTextFormField(
+                  labelText: 'Contraseña',
+                  obscureText: true,
+                ),
                 const SizedBox(height: 15),
-                const CustomTextFormField(labelText: 'Teléfono', keyboardType: TextInputType.phone),
+                const CustomTextFormField(
+                  labelText: 'Teléfono',
+                  keyboardType: TextInputType.phone,
+                ),
                 const SizedBox(height: 15),
                 const CustomTextFormField(labelText: 'Tipo de sangre'),
                 const SizedBox(height: 15),
