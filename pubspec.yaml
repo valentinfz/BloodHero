@@ -9,6 +9,19 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+      # Para la gestión de estado (recomendado)
+  flutter_riverpod: ^2.5.1
+  
+  # Para la navegación entre pantallas
+  go_router: ^14.1.0
+
+  # Para los puntos indicadores en el Onboarding
+  smooth_page_indicator: ^1.1.0
+
+  # Para usar fuentes de Google fácilmente
+  google_fonts: ^6.2.1
+
+  cupertino_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
@@ -17,3 +30,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  
+  assets:
+      - assets/images/
