@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
-import '../../widgets/primary_button.dart';
+import '../../widgets/shared/app_button.dart';
 
 // Modelos de datos hardcodeados (para la UI)
 class Alert {
@@ -65,15 +65,11 @@ class HomeScreen extends StatelessWidget {
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
       floatingActionButton: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: PrimaryButton(
-            text: 'Agendar donación',
-            onPressed: () {
-              // Acción del botón
-            },
-          ),
+        child: AppButton.primary(
+          text: 'Agendar donación',
+          onPressed: () {
+            // Acción del botón
+          },
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'package:bloodhero/presentation/screens/auth/login_screen.dart';
-import 'package:bloodhero/presentation/widgets/primary_button.dart';
+import 'package:bloodhero/presentation/widgets/shared/app_button.dart';
+import 'package:bloodhero/presentation/widgets/shared/illustration_placeholder.dart';
 
 class OnboardingScreen extends StatefulWidget {
   static const String name = 'onboarding_screen';
@@ -71,7 +73,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             bottom: 50,
             left: 30,
             right: 30,
-            child: PrimaryButton(
+            child: AppButton.primary(
               text: endReached ? 'Comenzar' : 'Siguiente',
               onPressed: () {
                 if (endReached) {
@@ -108,25 +110,16 @@ class _Slide extends StatelessWidget {
     final captionStyle = Theme.of(context).textTheme.bodySmall;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30),
+      padding: kScreenPadding,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              // Se muestra el icono dentro del contenedor
-              child: Icon(icon, size: 100, color: Colors.grey[400]),
-            ),
-            const SizedBox(height: 50),
+            IllustrationPlaceholder(size: 250, icon: icon),
+            const SizedBox(height: kSectionSpacing * 2),
             Text(title, style: titleStyle),
-            const SizedBox(height: 10),
+            const SizedBox(height: kSmallSpacing),
             Text(caption, style: captionStyle),
           ],
         ),

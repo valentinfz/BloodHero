@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'alert_detail_screen.dart';
 import 'package:bloodhero/presentation/widgets/custom_bottom_nav_bar.dart';
+import 'package:bloodhero/presentation/widgets/shared/info_card.dart';
 
 class AlertsScreen extends StatelessWidget {
   static const String name = 'alerts_screen';
@@ -18,35 +20,24 @@ class AlertsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Alertas activas')),
       body: ListView.separated(
-        padding: const EdgeInsets.all(24),
+        padding: kScreenPadding,
         itemBuilder: (context, index) {
           final alert = alerts[index];
-          return Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              title: Text(
-                alert.center,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  Text('Tipo de sangre: ${alert.bloodType}'),
-                  Text('Estado: ${alert.status}'),
-                  Text('Distancia: ${alert.distance}'),
-                ],
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.pushNamed(
-                AlertDetailScreen.name,
-                extra: alert.center,
-              ),
+          return InfoCard(
+            title: alert.center,
+            body: [
+              Text('Tipo de sangre: ${alert.bloodType}'),
+              Text('Estado: ${alert.status}'),
+              Text('Distancia: ${alert.distance}'),
+            ],
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.pushNamed(
+              AlertDetailScreen.name,
+              extra: alert.center,
             ),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
         itemCount: alerts.length,
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 3),

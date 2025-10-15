@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'package:bloodhero/presentation/screens/filters/filter_screen.dart';
 import 'package:bloodhero/presentation/screens/centers/center_detail_screen.dart';
 import 'package:bloodhero/presentation/widgets/custom_bottom_nav_bar.dart';
-import 'package:bloodhero/presentation/widgets/primary_button.dart';
+import 'package:bloodhero/presentation/widgets/shared/app_button.dart';
+import 'package:bloodhero/presentation/widgets/shared/illustration_placeholder.dart';
+import 'package:bloodhero/presentation/widgets/shared/info_card.dart';
 
 class MapScreen extends StatelessWidget {
   static const String name = 'map_screen';
@@ -31,54 +34,36 @@ class MapScreen extends StatelessWidget {
         children: [
           Expanded(
             flex: 3,
-            child: Container(
-              width: double.infinity,
-              color: Colors.grey[300],
-              alignment: Alignment.center,
-              child: const Text('Vista de mapa (placeholder)'),
+            child: Center(
+              child: IllustrationPlaceholder(
+                icon: Icons.map_outlined,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+              ),
             ),
           ),
           Expanded(
             flex: 2,
             child: ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: kScreenPadding,
               itemBuilder: (context, index) {
                 final center = centers[index];
-                return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          center.name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(center.address),
-                        const SizedBox(height: 4),
-                        Text('Distancia: ${center.distance}'),
-                        const SizedBox(height: 12),
-                        PrimaryButton(
-                          text: 'Ver detalles',
-                          height: 44,
-                          onPressed: () => context.pushNamed(
-                            CenterDetailScreen.name,
-                            extra: center.name,
-                          ),
-                        ),
-                      ],
+                return InfoCard(
+                  title: center.name,
+                  body: [
+                    Text(center.address),
+                    Text('Distancia: ${center.distance}'),
+                  ],
+                  footer: AppButton.secondary(
+                    text: 'Ver detalles',
+                    onPressed: () => context.pushNamed(
+                      CenterDetailScreen.name,
+                      extra: center.name,
                     ),
+                    size: AppButtonSize.small,
                   ),
                 );
               },
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
               itemCount: centers.length,
             ),
           ),

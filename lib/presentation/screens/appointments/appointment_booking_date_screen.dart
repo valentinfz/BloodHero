@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bloodhero/config/theme/layout_constants.dart';
+import 'package:bloodhero/presentation/widgets/shared/app_button.dart';
 import 'appointment_booking_time_screen.dart';
 
 class AppointmentBookingDateScreen extends StatefulWidget {
@@ -20,7 +22,7 @@ class _AppointmentBookingDateScreenState extends State<AppointmentBookingDateScr
     return Scaffold(
       appBar: AppBar(title: const Text('Agendar donación · Fecha')),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: kScreenPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -33,13 +35,12 @@ class _AppointmentBookingDateScreenState extends State<AppointmentBookingDateScr
               onDateChanged: (value) => setState(() => selectedDate = value),
             ),
             const Spacer(),
-            FilledButton(
+            AppButton.primary(
+              text: 'Continuar con ${selectedDate.day}/${selectedDate.month}',
               onPressed: () => context.pushNamed(
                 AppointmentBookingTimeScreen.name,
                 extra: {'center': widget.centerName, 'date': selectedDate},
               ),
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-              child: Text('Continuar con ${selectedDate.day}/${selectedDate.month}'),
             ),
           ],
         ),

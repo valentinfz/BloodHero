@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'package:bloodhero/presentation/widgets/custom_bottom_nav_bar.dart';
+import 'package:bloodhero/presentation/widgets/shared/info_card.dart';
 import 'appointment_booking_center_screen.dart';
 import 'appointment_detail_screen.dart';
 
@@ -30,42 +32,34 @@ class CitasScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Mis Citas')),
       body: ListView.separated(
-        padding: const EdgeInsets.all(24),
+        padding: kScreenPadding,
         itemBuilder: (context, index) {
           final appointment = appointments[index];
-          return Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              title: Text(
-                '${appointment.date} · ${appointment.time}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(appointment.center),
-              trailing: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    appointment.status,
-                    style: TextStyle(
-                      color: appointment.status == 'Confirmada'
-                          ? Colors.green
-                          : const Color(0xFFC62828),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Icon(Icons.chevron_right),
-                ],
-              ),
-              onTap: () => context.pushNamed(
-                AppointmentDetailScreen.name,
-                extra: appointment.id,
-              ),
+          final statusColor = appointment.status == 'Confirmada'
+              ? Colors.green
+              : Theme.of(context).colorScheme.error;
+          return InfoCard(
+            title: '${appointment.date} · ${appointment.time}',
+            body: [Text(appointment.center)],
+            trailing: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  appointment.status,
+                  style: TextStyle(color: statusColor),
+                ),
+                const SizedBox(height: kSmallSpacing / 2),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+            onTap: () => context.pushNamed(
+              AppointmentDetailScreen.name,
+              extra: appointment.id,
             ),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
         itemCount: appointments.length,
       ),
       floatingActionButton: FloatingActionButton.extended(

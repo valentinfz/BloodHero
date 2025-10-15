@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'package:bloodhero/presentation/screens/home/home_screen.dart';
-import 'package:bloodhero/presentation/widgets/primary_button.dart';
+import 'package:bloodhero/presentation/widgets/shared/app_button.dart';
+import 'package:bloodhero/presentation/widgets/shared/illustration_placeholder.dart';
 
 class PermissionsScreen extends StatefulWidget {
   static const String name = 'permissions_screen';
@@ -84,42 +86,27 @@ class _PermissionSlide extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
+      padding: kScreenPadding.copyWith(top: 40, bottom: 40),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Spacer(flex: 2),
-          // Placeholder para la imagen/icono
-          Container(
-            width: 250,
-            height: 250,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(
-              Icons.shield_outlined,
-              size: 100,
-              color: Colors.grey[400],
-            ),
-          ),
-          const SizedBox(height: 50),
+          IllustrationPlaceholder(size: 250, icon: Icons.shield_outlined),
+          const SizedBox(height: kSectionSpacing * 2),
           Text(title, style: textTheme.titleLarge, textAlign: TextAlign.center),
-          const SizedBox(height: 10),
+          const SizedBox(height: kSmallSpacing),
           Text(
             subtitle,
             style: textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
           const Spacer(flex: 3),
-          PrimaryButton(
+          AppButton.primary(
             text: buttonText,
             onPressed: onPressed,
-            backgroundColor: Colors.grey[300],
-            foregroundColor: Colors.black87,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: kCardSpacing),
         ],
       ),
     );

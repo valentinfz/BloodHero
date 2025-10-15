@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'package:bloodhero/presentation/screens/auth/register_screen.dart';
 import 'package:bloodhero/presentation/screens/permissions/permissions_screen.dart';
 import 'package:bloodhero/presentation/screens/auth/forgot_password_screen.dart';
 import 'package:bloodhero/presentation/widgets/custom_text_form_field.dart';
-import 'package:bloodhero/presentation/widgets/primary_button.dart';
+import 'package:bloodhero/presentation/widgets/shared/app_button.dart';
 
 class LoginScreen extends StatelessWidget {
   static const String name = 'login_screen';
@@ -18,20 +19,20 @@ class LoginScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+            padding: kScreenPadding,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 50),
                 Text('Iniciar sesión', style: textTheme.headlineMedium),
-                const SizedBox(height: 40),
+                const SizedBox(height: kSectionSpacing),
                 const CustomTextFormField(labelText: 'Email'),
-                const SizedBox(height: 20),
+                const SizedBox(height: kCardSpacing),
                 const CustomTextFormField(
                   labelText: 'Contraseña',
                   obscureText: true,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: kCardSpacing),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -39,15 +40,15 @@ class LoginScreen extends StatelessWidget {
                     child: const Text('¿Olvidaste tu contraseña?'),
                   ),
                 ),
-                const SizedBox(height: 10),
-                PrimaryButton(
+                const SizedBox(height: kSmallSpacing),
+                AppButton.primary(
                   text: 'Ingresar',
                   onPressed: () {
                     // TODO: Lógica de inicio de sesión
                     context.goNamed(PermissionsScreen.name);
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: kCardSpacing),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
