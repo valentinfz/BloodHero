@@ -4,12 +4,14 @@ class CustomTextFormField extends StatelessWidget {
   final String labelText;
   final bool obscureText;
   final TextInputType? keyboardType;
+  final String? helperText;
 
   const CustomTextFormField({
     super.key,
     required this.labelText,
     this.obscureText = false,
     this.keyboardType,
+    this.helperText,
   });
 
   @override
@@ -19,6 +21,7 @@ class CustomTextFormField extends StatelessWidget {
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: labelText,
+        helperText: helperText,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

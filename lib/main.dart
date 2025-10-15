@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bloodhero/config/router/app_router.dart';
 import 'package:bloodhero/config/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
+  GoogleFonts.config.allowRuntimeFetching = false;
   runApp(
     // ProviderScope es el widget que almacena el estado de todos los providers.
     // Es necesario para que Riverpod funcione.

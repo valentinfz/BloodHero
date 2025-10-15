@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bloodhero/presentation/screens/auth/register_screen.dart';
 import 'package:bloodhero/presentation/screens/permissions/permissions_screen.dart';
+import 'package:bloodhero/presentation/screens/auth/forgot_password_screen.dart';
 import 'package:bloodhero/presentation/widgets/custom_text_form_field.dart';
 import 'package:bloodhero/presentation/widgets/primary_button.dart';
 
@@ -30,7 +31,15 @@ class LoginScreen extends StatelessWidget {
                   labelText: 'Contraseña',
                   obscureText: true,
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => context.pushNamed(ForgotPasswordScreen.name),
+                    child: const Text('¿Olvidaste tu contraseña?'),
+                  ),
+                ),
+                const SizedBox(height: 10),
                 PrimaryButton(
                   text: 'Ingresar',
                   onPressed: () {

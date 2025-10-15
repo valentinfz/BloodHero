@@ -3,6 +3,13 @@ import 'package:go_router/go_router.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 import '../../widgets/menu_button.dart';
 import '../auth/login_screen.dart';
+import 'edit_profile_screen.dart';
+import 'preferences_screen.dart';
+import 'security_screen.dart';
+import 'help_center_screen.dart';
+import 'checkin_qr_screen.dart';
+import 'privacy_policy_screen.dart';
+import '../history/history_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   static const String name = 'profile_screen';
@@ -39,17 +46,43 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 32),
               MenuButton(
                 text: 'Editar perfil',
-                onPressed: () {
-                  // TODO: Navegar a la pantalla de edición de perfil
-                },
+                onPressed: () => context.pushNamed(EditProfileScreen.name),
+                isOutlined: true,
+              ),
+              const SizedBox(height: 16),
+              MenuButton(
+                text: 'Historial de donaciones',
+                onPressed: () => context.pushNamed(HistoryScreen.name),
+                isOutlined: true,
+              ),
+              const SizedBox(height: 16),
+              MenuButton(
+                text: 'Preferencias',
+                onPressed: () => context.pushNamed(PreferencesScreen.name),
+                isOutlined: true,
+              ),
+              const SizedBox(height: 16),
+              MenuButton(
+                text: 'Seguridad',
+                onPressed: () => context.pushNamed(SecurityScreen.name),
                 isOutlined: true,
               ),
               const SizedBox(height: 16),
               MenuButton(
                 text: 'Centro de ayuda',
-                onPressed: () {
-                  // TODO: Navegar al centro de ayuda
-                },
+                onPressed: () => context.pushNamed(HelpCenterScreen.name),
+                isOutlined: true,
+              ),
+              const SizedBox(height: 16),
+              MenuButton(
+                text: 'Check-in QR',
+                onPressed: () => context.pushNamed(CheckInQrScreen.name),
+                isOutlined: true,
+              ),
+              const SizedBox(height: 16),
+              MenuButton(
+                text: 'Política de privacidad',
+                onPressed: () => context.pushNamed(PrivacyPolicyScreen.name),
                 isOutlined: true,
               ),
               const SizedBox(height: 16),

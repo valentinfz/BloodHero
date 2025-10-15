@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bloodhero/presentation/screens/permissions/permissions_screen.dart';
+import 'package:bloodhero/presentation/screens/auth/complete_profile_screen.dart';
 import 'package:bloodhero/presentation/widgets/custom_text_form_field.dart';
 import 'package:bloodhero/presentation/widgets/primary_button.dart';
 
@@ -10,7 +10,6 @@ class RegisterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Crear cuenta')),
       body: SafeArea(
@@ -44,7 +43,7 @@ class RegisterScreen extends StatelessWidget {
                   text: 'Crear cuenta',
                   onPressed: () {
                     // TODO: Lógica de registro de usuario
-                    context.goNamed(PermissionsScreen.name);
+                    context.goNamed(CompleteProfileScreen.name);
                   },
                 ),
               ],

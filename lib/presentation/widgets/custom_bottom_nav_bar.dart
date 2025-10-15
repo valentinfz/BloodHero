@@ -17,7 +17,9 @@ class CustomBottomNavBar extends StatelessWidget {
         }
         break;
       case 1:
-        // router.go('/map');
+        if (currentLocation != '/map') {
+          router.go('/map');
+        }
         break;
       case 2:
         if (currentLocation != '/citas') {
@@ -25,7 +27,9 @@ class CustomBottomNavBar extends StatelessWidget {
         }
         break;
       case 3:
-        // router.go('/impact');
+        if (currentLocation != '/impact') {
+          router.go('/impact');
+        }
         break;
       case 4:
         if (currentLocation != '/profile') {
