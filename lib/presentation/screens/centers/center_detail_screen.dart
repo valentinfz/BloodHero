@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bloodhero/presentation/screens/appointments/appointment_booking_center_screen.dart';
+import 'package:bloodhero/presentation/screens/appointments/appointment_booking_date_screen.dart';
 import 'package:bloodhero/presentation/screens/centers/center_reviews_screen.dart';
 
 class CenterDetailScreen extends StatelessWidget {
@@ -65,7 +65,7 @@ class CenterDetailScreen extends StatelessWidget {
             const _BulletItem('Atención priorizada para donadores frecuentes'),
             const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: () => context.pushNamed(AppointmentBookingCenterScreen.name, extra: title),
+              onPressed: () => context.pushNamed(AppointmentBookingDateScreen.name, extra: title),
               icon: const Icon(Icons.calendar_month),
               label: const Text('Agendar donación'),
               style: FilledButton.styleFrom(

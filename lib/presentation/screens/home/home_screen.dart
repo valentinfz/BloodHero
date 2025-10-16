@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
-import '../../widgets/shared/app_button.dart';
 
 // Modelos de datos hardcodeados (para la UI)
 class Alert {
@@ -57,22 +56,12 @@ class HomeScreen extends StatelessWidget {
               _NearbyAlertsSection(alerts: nearbyAlerts),
               const SizedBox(height: 24),
               const _ImpactSection(),
-              const SizedBox(height: 96), // Espacio para el botón flotante
+              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: AppButton.primary(
-          text: 'Agendar donación',
-          onPressed: () {
-            // Acción del botón
-          },
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

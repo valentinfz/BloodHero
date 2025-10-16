@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'package:bloodhero/presentation/widgets/custom_bottom_nav_bar.dart';
 import 'package:bloodhero/presentation/widgets/shared/info_card.dart';
-import 'appointment_booking_center_screen.dart';
 import 'appointment_detail_screen.dart';
 
 class CitasScreen extends StatelessWidget {
@@ -18,14 +17,12 @@ class CitasScreen extends StatelessWidget {
         center: 'Hospital Central',
         date: '12/11/2025',
         time: '10:30',
-        status: 'Confirmada',
       ),
       _AppointmentCardData(
         id: '2',
         center: 'Banco de Sangre Norte',
         date: '05/12/2025',
         time: '09:00',
-        status: 'Pendiente',
       ),
     ];
 
@@ -35,9 +32,6 @@ class CitasScreen extends StatelessWidget {
         padding: kScreenPadding,
         itemBuilder: (context, index) {
           final appointment = appointments[index];
-          final statusColor = appointment.status == 'Confirmada'
-              ? Colors.green
-              : Theme.of(context).colorScheme.error;
           return InfoCard(
             title: '${appointment.date} · ${appointment.time}',
             body: [Text(appointment.center)],
@@ -45,11 +39,6 @@ class CitasScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  appointment.status,
-                  style: TextStyle(color: statusColor),
-                ),
-                const SizedBox(height: kSmallSpacing / 2),
                 const Icon(Icons.chevron_right),
               ],
             ),
@@ -62,11 +51,6 @@ class CitasScreen extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
         itemCount: appointments.length,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.pushNamed(AppointmentBookingCenterScreen.name),
-        icon: const Icon(Icons.add),
-        label: const Text('Agendar cita'),
-      ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
     );
   }
@@ -77,13 +61,11 @@ class _AppointmentCardData {
   final String center;
   final String date;
   final String time;
-  final String status;
 
   const _AppointmentCardData({
     required this.id,
     required this.center,
     required this.date,
     required this.time,
-    required this.status,
   });
 }

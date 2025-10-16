@@ -30,7 +30,7 @@ class HistoryScreen extends StatelessWidget {
               ),
               title: Text('${item.date} · ${item.type}'),
               subtitle: Text(item.center),
-              trailing: Text(item.wasCompleted ? 'Completada' : 'Cancelada'),
+              trailing: Text(item.wasCompleted ? 'Realizada' : 'Cancelada'),
             ),
           );
         },

@@ -60,7 +60,7 @@ class CustomBottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(
           icon: Icon(Icons.map_outlined),
           activeIcon: Icon(Icons.map),
-          label: 'Mapa',
+          label: 'Centros',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_today_outlined),
