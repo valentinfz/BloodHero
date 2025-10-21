@@ -30,6 +30,8 @@ import 'package:bloodhero/presentation/screens/profile/security_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/help_center_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/checkin_qr_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/privacy_policy_screen.dart';
+import 'package:bloodhero/presentation/screens/map/centers_loader.dart';
+
 
 // GoRouter configuration
 final appRouter = GoRouter(
@@ -89,10 +91,16 @@ final appRouter = GoRouter(
       path: '/center-detail',
       name: CenterDetailScreen.name,
       builder: (context, state) {
-        final centerName = state.extra as String?;
-        return CenterDetailScreen(centerName: centerName);
-      },
-    ),
+    final extra = state.extra;
+
+    if (extra is MapCenter) {
+      return CenterDetailScreen(center: extra);
+    } else {
+      final centerName = extra as String?;
+      return CenterDetailScreen(centerName: centerName);
+    }
+  },
+),
     GoRoute(
       path: '/center-reviews',
       name: CenterReviewsScreen.name,
