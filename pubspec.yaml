@@ -9,7 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-      # Para la gestión de estado (recomendado)
+  
+  # Para la gestión de estado (recomendado)
   flutter_riverpod: ^3.0.3
   
   # Para la navegación entre pantallas

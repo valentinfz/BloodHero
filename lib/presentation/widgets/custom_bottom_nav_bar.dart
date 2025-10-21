@@ -17,8 +17,8 @@ class CustomBottomNavBar extends StatelessWidget {
         }
         break;
       case 1:
-        if (currentLocation != '/map') {
-          router.go('/map');
+        if (currentLocation != '/centers') {
+          router.go('/centers');
         }
         break;
       case 2:
@@ -58,8 +58,8 @@ class CustomBottomNavBar extends StatelessWidget {
           label: 'Inicio',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.map_outlined),
-          activeIcon: Icon(Icons.map),
+          icon: Icon(Icons.local_hospital_outlined),
+          activeIcon: Icon(Icons.local_hospital),
           label: 'Centros',
         ),
         BottomNavigationBarItem(

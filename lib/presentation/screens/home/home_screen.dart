@@ -1,20 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../providers/home_providers.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
-
-// Modelos de datos hardcodeados (para la UI)
-class Alert {
-  final String bloodType;
-  final String distance;
-  final String expiration;
-  Alert(this.bloodType, this.distance, this.expiration);
-}
-
-class Appointment {
-  final String date;
-  final String time;
-  final String location;
-  Appointment(this.date, this.time, this.location);
-}
+import '../appointments/citas_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   static const String name = 'home_screen';
@@ -22,27 +11,13 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- Datos de ejemplo ---
-    final nextAppointment = Appointment(
-      'Lun 12/11',
-      '10:30',
-      'Hospital Central',
-    );
-    final nearbyAlerts = [
-      Alert('O-', '2 km', 'vence hoy'),
-      Alert('A+', '5 km', 'vence en 2 días'),
-      Alert('B-', '8 km', 'vence en 3 días'),
-    ];
-    const userName = 'Usuario';
-    // ----------------------
-
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         toolbarHeight: 80,
         backgroundColor: Colors.grey[100],
         elevation: 0,
-        title: const _Header(userName: userName),
+        title: const _Header(),
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
@@ -50,13 +25,13 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _NextAppointmentCard(appointment: nextAppointment),
-              const SizedBox(height: 24),
-              _NearbyAlertsSection(alerts: nearbyAlerts),
-              const SizedBox(height: 24),
-              const _ImpactSection(),
-              const SizedBox(height: 24),
+            children: const [
+              _NextAppointmentCard(),
+              SizedBox(height: 24),
+              _NearbyAlertsSection(),
+              SizedBox(height: 24),
+              _ImpactSection(),
+              SizedBox(height: 24),
             ],
           ),
         ),
@@ -66,71 +41,94 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// --- Widgets internos de la pantalla Home ---
-
-class _Header extends StatelessWidget {
-  final String userName;
-  const _Header({required this.userName});
+class _Header extends ConsumerWidget {
+  const _Header();
 
   @override
-  Widget build(BuildContext context) {
-    return Text(
-      'Hola, $userName',
-      style: const TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
-      ),
-    );
-  }
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Se observa el provider del perfil de usuario
+    final userProfileAsync = ref.watch(userProfileProvider);
 
-class _NextAppointmentCard extends StatelessWidget {
-  final Appointment appointment;
-  const _NextAppointmentCard({required this.appointment});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            const Icon(Icons.calendar_today, color: Color(0xFFC62828)),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Próxima donación',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${appointment.date} - ${appointment.time}',
-                  style: const TextStyle(fontSize: 14),
-                ),
-                Text(
-                  appointment.location,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                ),
-              ],
-            ),
-          ],
+    // .when para manejar los diferentes estados
+    return userProfileAsync.when(
+      // Mientras carga, no mostramos nada.
+      loading: () => const SizedBox.shrink(),
+      // Si hay un error, mostramos un saludo generico
+      error: (err, stack) => const Text('Hola'),
+      // Cuando tenemos los datos, extraemos el nombre y lo mostramos
+      data: (user) => Text(
+        'Hola, ${user.name}',
+        style: const TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
         ),
       ),
     );
   }
 }
 
-class _NearbyAlertsSection extends StatelessWidget {
-  final List<Alert> alerts;
-  const _NearbyAlertsSection({required this.alerts});
+class _NextAppointmentCard extends ConsumerWidget {
+  const _NextAppointmentCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appointmentAsync = ref.watch(nextAppointmentProvider);
+
+    return appointmentAsync.when(
+      loading: () => const _LoadingCard(height: 120),
+      error: (err, stack) => Text('Error: $err'),
+      data: (appointment) => Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              const Icon(Icons.calendar_today, color: Color(0xFFC62828)),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Próxima donación',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${appointment.date} - ${appointment.time}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    Text(
+                      appointment.location,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.goNamed(CitasScreen.name),
+                child: const Text('Ver'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NearbyAlertsSection extends ConsumerWidget {
+  const _NearbyAlertsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final alertsAsync = ref.watch(nearbyAlertsProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -141,13 +139,17 @@ class _NearbyAlertsSection extends StatelessWidget {
         const SizedBox(height: 12),
         SizedBox(
           height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: alerts.length,
-            itemBuilder: (context, index) {
-              final alert = alerts[index];
-              return _AlertCard(alert: alert);
-            },
+          child: alertsAsync.when(
+            loading: () => const _LoadingCard(width: 160),
+            error: (err, stack) => Text('Error: $err'),
+            data: (alerts) => ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: alerts.length,
+              itemBuilder: (context, index) {
+                final alert = alerts[index];
+                return _AlertCard(alert: alert);
+              },
+            ),
           ),
         ),
       ],
@@ -156,7 +158,7 @@ class _NearbyAlertsSection extends StatelessWidget {
 }
 
 class _AlertCard extends StatelessWidget {
-  final Alert alert;
+  final dynamic alert;
   const _AlertCard({required this.alert});
 
   @override
@@ -194,30 +196,58 @@ class _AlertCard extends StatelessWidget {
   }
 }
 
-class _ImpactSection extends StatelessWidget {
+class _ImpactSection extends ConsumerWidget {
   const _ImpactSection();
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Tu impacto',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text('Vidas ayudadas: 6', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 4),
-            Text('Ranking: Donador leal', style: TextStyle(fontSize: 16)),
-          ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final impactAsync = ref.watch(userImpactProvider);
+
+    return impactAsync.when(
+      loading: () => const _LoadingCard(height: 120),
+      error: (err, stack) => Text('Error: $err'),
+      data: (impact) => Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Tu impacto',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Vidas ayudadas: ${impact.livesHelped}',
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Ranking: ${impact.ranking}',
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
+  final double? height;
+  final double? width;
+  const _LoadingCard({this.height, this.width});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: width,
+      alignment: Alignment.center,
+      child: const CircularProgressIndicator(),
     );
   }
 }

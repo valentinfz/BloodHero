@@ -30,7 +30,6 @@ import 'package:bloodhero/presentation/screens/profile/help_center_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/checkin_qr_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/privacy_policy_screen.dart';
 
-// GoRouter configuration
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
@@ -70,9 +69,9 @@ final appRouter = GoRouter(
       builder: (context, state) => const HomeScreen(),
     ),
     GoRoute(
-      path: '/map',
-      name: MapScreen.name,
-      builder: (context, state) => const MapScreen(),
+      path: '/centers',
+      name: CenterScreen.name,
+      builder: (context, state) => const CenterScreen(),
     ),
     GoRoute(
       path: '/filters',

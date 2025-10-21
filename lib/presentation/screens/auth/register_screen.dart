@@ -1,16 +1,57 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'package:bloodhero/presentation/screens/permissions/permissions_screen.dart';
-import 'package:bloodhero/presentation/widgets/custom_text_form_field.dart';
-import 'package:bloodhero/presentation/widgets/shared/app_button.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../config/theme/layout_constants.dart';
+import '../../widgets/custom_text_form_field.dart';
+import '../../widgets/shared/app_button.dart';
+import '../../providers/auth_provider.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   static const String name = 'register_screen';
   const RegisterScreen({super.key});
 
   @override
+  RegisterScreenState createState() => RegisterScreenState();
+}
+
+class RegisterScreenState extends ConsumerState<RegisterScreen> {
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _bloodTypeController = TextEditingController();
+  final _cityController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _phoneController.dispose();
+    _bloodTypeController.dispose();
+    _cityController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+
+    ref.listen(authProvider, (previous, next) {
+      if (next == AuthState.success) {
+        context.goNamed(PermissionsScreen.name);
+      }
+      if (next == AuthState.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: El email ya está registrado (demo).'),
+          ),
+        );
+        ref.read(authProvider.notifier).resetState();
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(title: const Text('Crear cuenta')),
       body: SafeArea(
@@ -19,34 +60,61 @@ class RegisterScreen extends StatelessWidget {
             padding: kScreenPadding,
             child: Column(
               children: [
-                const CustomTextFormField(labelText: 'Nombre y apellido'),
+                CustomTextFormField(
+                  labelText: 'Nombre y apellido',
+                  controller: _nameController,
+                ),
                 const SizedBox(height: kCardSpacing),
-                const CustomTextFormField(
+                CustomTextFormField(
                   labelText: 'Email',
                   keyboardType: TextInputType.emailAddress,
+                  controller: _emailController,
                 ),
                 const SizedBox(height: kCardSpacing),
-                const CustomTextFormField(
+                CustomTextFormField(
                   labelText: 'Contraseña',
                   obscureText: true,
+                  controller: _passwordController,
                 ),
                 const SizedBox(height: kCardSpacing),
-                const CustomTextFormField(
+                CustomTextFormField(
                   labelText: 'Teléfono',
                   keyboardType: TextInputType.phone,
+                  controller: _phoneController,
                 ),
                 const SizedBox(height: kCardSpacing),
-                const CustomTextFormField(labelText: 'Tipo de sangre'),
+                CustomTextFormField(
+                  labelText: 'Tipo de sangre',
+                  controller: _bloodTypeController,
+                ),
                 const SizedBox(height: kCardSpacing),
-                const CustomTextFormField(labelText: 'Ciudad'),
+                CustomTextFormField(
+                  labelText: 'Ciudad',
+                  controller: _cityController,
+                ),
                 const SizedBox(height: kSectionSpacing),
                 AppButton.primary(
                   text: 'Crear cuenta',
-                  onPressed: () {
-                    // TODO: Lógica de registro de usuario
-                    context.goNamed(PermissionsScreen.name);
-                  },
+                  onPressed: authState == AuthState.loading
+                      ? null
+                      : () {
+                          ref
+                              .read(authProvider.notifier)
+                              .register(
+                                name: _nameController.text,
+                                email: _emailController.text,
+                                password: _passwordController.text,
+                                phone: _phoneController.text,
+                                bloodType: _bloodTypeController.text,
+                                city: _cityController.text,
+                              );
+                        },
                 ),
+                if (authState == AuthState.loading)
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  ),
               ],
             ),
           ),
