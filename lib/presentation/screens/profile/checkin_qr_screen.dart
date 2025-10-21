@@ -44,7 +44,9 @@ class CheckInQrScreen extends StatelessWidget {
               },
               icon: const Icon(Icons.share),
               label: const Text('Compartir'),
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
             ),
           ],
         ),

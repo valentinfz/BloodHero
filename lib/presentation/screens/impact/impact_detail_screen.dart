@@ -20,7 +20,9 @@ class ImpactDetailScreen extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
-            Text('Completaste los objetivos de este logro sumando tus donaciones y participación en alertas.'),
+            Text(
+              'Completaste los objetivos de este logro sumando tus donaciones y participación en alertas.',
+            ),
             SizedBox(height: 24),
             Text(
               'Próximo objetivo',
@@ -29,10 +31,7 @@ class ImpactDetailScreen extends StatelessWidget {
             SizedBox(height: 8),
             Text('Doná una vez más este mes para subir al siguiente nivel.'),
             Spacer(),
-            FilledButton(
-              onPressed: null,
-              child: Text('Compartir logro'),
-            ),
+            FilledButton(onPressed: null, child: Text('Compartir logro')),
           ],
         ),
       ),

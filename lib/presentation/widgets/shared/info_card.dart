@@ -37,10 +37,9 @@ class InfoCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   if (body.isNotEmpty) ...[
                     const SizedBox(height: kSmallSpacing),
@@ -63,10 +62,7 @@ class InfoCard extends StatelessWidget {
             ],
           ],
         ),
-        if (footer != null) ...[
-          const SizedBox(height: kItemSpacing),
-          footer!,
-        ],
+        if (footer != null) ...[const SizedBox(height: kItemSpacing), footer!],
       ],
     );
 
@@ -77,10 +73,7 @@ class InfoCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(kCardBorderRadius),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: content,
-        ),
+        child: Padding(padding: const EdgeInsets.all(16), child: content),
       ),
     );
   }

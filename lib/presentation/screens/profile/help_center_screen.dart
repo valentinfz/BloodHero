@@ -7,9 +7,18 @@ class HelpCenterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final faqs = const [
-      _Faq('¿Quiénes pueden donar sangre?', 'Personas mayores de 18 años, con buen estado de salud y más de 50kg.'),
-      _Faq('¿Cada cuánto puedo donar?', 'Cada 8 semanas para sangre total. Para plaquetas, cada 15 días.'),
-      _Faq('¿Debo estar en ayunas?', 'No. Se recomienda desayunar e hidratarse bien antes de donar.'),
+      _Faq(
+        '¿Quiénes pueden donar sangre?',
+        'Personas mayores de 18 años, con buen estado de salud y más de 50kg.',
+      ),
+      _Faq(
+        '¿Cada cuánto puedo donar?',
+        'Cada 8 semanas para sangre total. Para plaquetas, cada 15 días.',
+      ),
+      _Faq(
+        '¿Debo estar en ayunas?',
+        'No. Se recomienda desayunar e hidratarse bien antes de donar.',
+      ),
     ];
 
     return Scaffold(
@@ -17,19 +26,27 @@ class HelpCenterScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Text('Preguntas frecuentes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Preguntas frecuentes',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
-          ...faqs.map((faq) => ExpansionTile(
-                title: Text(faq.question),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(faq.answer),
-                  ),
-                ],
-              )),
+          ...faqs.map(
+            (faq) => ExpansionTile(
+              title: Text(faq.question),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(faq.answer),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
-          const Text('¿Necesitás más ayuda?', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            '¿Necesitás más ayuda?',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           ListTile(
             leading: const Icon(Icons.email_outlined),

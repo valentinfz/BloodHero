@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bloodhero/config/theme/layout_constants.dart';
-import 'package:bloodhero/presentation/screens/auth/complete_profile_screen.dart';
+import 'package:bloodhero/presentation/screens/permissions/permissions_screen.dart';
 import 'package:bloodhero/presentation/widgets/custom_text_form_field.dart';
 import 'package:bloodhero/presentation/widgets/shared/app_button.dart';
 
@@ -44,7 +44,7 @@ class RegisterScreen extends StatelessWidget {
                   text: 'Crear cuenta',
                   onPressed: () {
                     // TODO: Lógica de registro de usuario
-                    context.goNamed(CompleteProfileScreen.name);
+                    context.goNamed(PermissionsScreen.name);
                   },
                 ),
               ],

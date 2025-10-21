@@ -36,7 +36,8 @@ class LoginScreen extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () => context.pushNamed(ForgotPasswordScreen.name),
+                    onPressed: () =>
+                        context.pushNamed(ForgotPasswordScreen.name),
                     child: const Text('¿Olvidaste tu contraseña?'),
                   ),
                 ),

@@ -38,7 +38,9 @@ class AppointmentDetailScreen extends StatelessWidget {
               onPressed: () {
                 // TODO: Implementar reprogramación
               },
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
               child: const Text('Reprogramar turno'),
             ),
             const SizedBox(height: 12),
@@ -46,7 +48,9 @@ class AppointmentDetailScreen extends StatelessWidget {
               onPressed: () {
                 // TODO: Implementar cancelación
               },
-              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
               child: const Text('Cancelar turno'),
             ),
           ],
@@ -71,7 +75,10 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 140,
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           Expanded(child: Text(value)),
         ],

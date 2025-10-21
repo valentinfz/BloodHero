@@ -102,10 +102,7 @@ class _PermissionSlide extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const Spacer(flex: 3),
-          AppButton.primary(
-            text: buttonText,
-            onPressed: onPressed,
-          ),
+          AppButton.primary(text: buttonText, onPressed: onPressed),
           const SizedBox(height: kCardSpacing),
         ],
       ),

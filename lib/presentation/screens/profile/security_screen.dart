@@ -11,7 +11,10 @@ class SecurityScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Text('Protegé tu cuenta', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Protegé tu cuenta',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           ListTile(
             leading: const Icon(Icons.lock_outline),
@@ -44,7 +47,9 @@ class SecurityScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.delete_outline, color: Colors.red),
             title: const Text('Eliminar cuenta'),
-            subtitle: const Text('Podés solicitar la eliminación de todos tus datos'),
+            subtitle: const Text(
+              'Podés solicitar la eliminación de todos tus datos',
+            ),
             onTap: () {
               // TODO: Proceso de eliminación
             },

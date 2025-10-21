@@ -19,10 +19,14 @@ class HistoryScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final item = history[index];
           return Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor: item.wasCompleted ? Colors.green.shade100 : Colors.red.shade100,
+                backgroundColor: item.wasCompleted
+                    ? Colors.green.shade100
+                    : Colors.red.shade100,
                 child: Icon(
                   item.wasCompleted ? Icons.check : Icons.cancel,
                   color: item.wasCompleted ? Colors.green : Colors.red,

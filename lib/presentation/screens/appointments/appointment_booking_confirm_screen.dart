@@ -36,9 +36,7 @@ class AppointmentBookingConfirmScreen extends StatelessWidget {
             _SummaryRow(label: 'Horario', value: time),
             _SummaryRow(label: 'Tipo de donación', value: 'Sangre total'),
             const SizedBox(height: 24),
-            const Text(
-              'Recordá presentarte 15 minutos antes y llevar tu DNI.',
-            ),
+            const Text('Recordá presentarte 15 minutos antes y llevar tu DNI.'),
             const Spacer(),
             FilledButton.icon(
               onPressed: () => context.goNamed(
@@ -51,7 +49,9 @@ class AppointmentBookingConfirmScreen extends StatelessWidget {
               ),
               icon: const Icon(Icons.check_circle_outline),
               label: const Text('Confirmar turno'),
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
             ),
           ],
         ),

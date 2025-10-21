@@ -19,7 +19,8 @@ class CenterDetailScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.reviews_outlined),
-            onPressed: () => context.pushNamed(CenterReviewsScreen.name, extra: title),
+            onPressed: () =>
+                context.pushNamed(CenterReviewsScreen.name, extra: title),
           ),
         ],
       ),
@@ -42,7 +43,9 @@ class CenterDetailScreen extends StatelessWidget {
                 Icon(Icons.location_on_outlined, color: Color(0xFFC62828)),
                 SizedBox(width: 8),
                 Expanded(
-                  child: Text('Av. Principal 123, Ciudad Autónoma de Buenos Aires'),
+                  child: Text(
+                    'Av. Principal 123, Ciudad Autónoma de Buenos Aires',
+                  ),
                 ),
               ],
             ),
@@ -51,7 +54,9 @@ class CenterDetailScreen extends StatelessWidget {
               children: const [
                 Icon(Icons.schedule_outlined, color: Color(0xFFC62828)),
                 SizedBox(width: 8),
-                Expanded(child: Text('Lun a Vie 8:00 - 18:00 · Sáb 9:00 - 13:00')),
+                Expanded(
+                  child: Text('Lun a Vie 8:00 - 18:00 · Sáb 9:00 - 13:00'),
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -65,7 +70,10 @@ class CenterDetailScreen extends StatelessWidget {
             const _BulletItem('Atención priorizada para donadores frecuentes'),
             const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: () => context.pushNamed(AppointmentBookingDateScreen.name, extra: title),
+              onPressed: () => context.pushNamed(
+                AppointmentBookingDateScreen.name,
+                extra: title,
+              ),
               icon: const Icon(Icons.calendar_month),
               label: const Text('Agendar donación'),
               style: FilledButton.styleFrom(
@@ -90,7 +98,10 @@ class _BulletItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(fontSize: 20, color: Color(0xFFC62828))),
+          const Text(
+            '• ',
+            style: TextStyle(fontSize: 20, color: Color(0xFFC62828)),
+          ),
           Expanded(child: Text(text)),
         ],
       ),

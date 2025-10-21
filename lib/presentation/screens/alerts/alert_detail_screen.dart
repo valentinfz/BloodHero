@@ -24,7 +24,10 @@ class AlertDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('Tipo de sangre requerido: O-', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Tipo de sangre requerido: O-',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(height: 8),
                   Text('Urgencia: Dentro de 12 horas'),
                   Text('Cantidad necesaria: 5 donaciones'),
@@ -50,7 +53,9 @@ class AlertDetailScreen extends StatelessWidget {
               onPressed: () {
                 // TODO: Implementar respuesta a la alerta
               },
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
               child: const Text('Quiero ayudar'),
             ),
           ],

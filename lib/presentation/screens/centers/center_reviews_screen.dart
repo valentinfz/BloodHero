@@ -10,9 +10,21 @@ class CenterReviewsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = centerName ?? 'Reseñas del centro';
     final reviews = const [
-      _Review(author: 'María López', rating: 5, comment: 'Excelente atención y muy profesionales.'),
-      _Review(author: 'Carlos Díaz', rating: 4, comment: 'Todo muy bien, sólo demoraron un poco en recibirnos.'),
-      _Review(author: 'Lucía Pérez', rating: 5, comment: 'Instalaciones impecables y personal amable.'),
+      _Review(
+        author: 'María López',
+        rating: 5,
+        comment: 'Excelente atención y muy profesionales.',
+      ),
+      _Review(
+        author: 'Carlos Díaz',
+        rating: 4,
+        comment: 'Todo muy bien, sólo demoraron un poco en recibirnos.',
+      ),
+      _Review(
+        author: 'Lucía Pérez',
+        rating: 5,
+        comment: 'Instalaciones impecables y personal amable.',
+      ),
     ];
 
     return Scaffold(
@@ -22,7 +34,9 @@ class CenterReviewsScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final review = reviews[index];
           return Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -41,13 +55,18 @@ class CenterReviewsScreen extends StatelessWidget {
                           children: [
                             Text(
                               review.author,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                             Row(
                               children: List.generate(
                                 5,
                                 (i) => Icon(
-                                  i < review.rating ? Icons.star : Icons.star_border,
+                                  i < review.rating
+                                      ? Icons.star
+                                      : Icons.star_border,
                                   color: Colors.amber,
                                   size: 20,
                                 ),
@@ -77,5 +96,9 @@ class _Review {
   final int rating;
   final String comment;
 
-  const _Review({required this.author, required this.rating, required this.comment});
+  const _Review({
+    required this.author,
+    required this.rating,
+    required this.comment,
+  });
 }

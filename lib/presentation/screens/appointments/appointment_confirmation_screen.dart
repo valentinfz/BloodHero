@@ -54,7 +54,9 @@ class AppointmentConfirmationScreen extends StatelessWidget {
               const Spacer(flex: 3),
               FilledButton(
                 onPressed: () => context.goNamed(CitasScreen.name),
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                ),
                 child: const Text('Ver mis citas'),
               ),
               const SizedBox(height: 12),

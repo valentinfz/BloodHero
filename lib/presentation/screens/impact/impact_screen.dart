@@ -23,13 +23,21 @@ class ImpactScreen extends StatelessWidget {
         children: [
           _ImpactSummary(stats: stats),
           const SizedBox(height: 24),
-          const Text('Tus logros', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Tus logros',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           ...achievements.map(
             (achievement) => Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: ListTile(
-                leading: const Icon(Icons.emoji_events, color: Color(0xFFC62828)),
+                leading: const Icon(
+                  Icons.emoji_events,
+                  color: Color(0xFFC62828),
+                ),
                 title: Text(achievement.title),
                 subtitle: Text(achievement.subtitle),
                 trailing: const Icon(Icons.chevron_right),
@@ -52,7 +60,11 @@ class _ImpactStats {
   final int donations;
   final int streak;
 
-  const _ImpactStats({required this.livesHelped, required this.donations, required this.streak});
+  const _ImpactStats({
+    required this.livesHelped,
+    required this.donations,
+    required this.streak,
+  });
 }
 
 class _Achievement {
@@ -77,7 +89,10 @@ class _ImpactSummary extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _ImpactValue(label: 'Vidas', value: stats.livesHelped.toString()),
-            _ImpactValue(label: 'Donaciones', value: stats.donations.toString()),
+            _ImpactValue(
+              label: 'Donaciones',
+              value: stats.donations.toString(),
+            ),
             _ImpactValue(label: 'Racha', value: '${stats.streak} meses'),
           ],
         ),
@@ -96,7 +111,10 @@ class _ImpactValue extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 4),
         Text(label, style: TextStyle(color: Colors.grey[600])),
       ],

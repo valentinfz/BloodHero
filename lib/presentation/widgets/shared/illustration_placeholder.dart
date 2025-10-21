@@ -22,7 +22,7 @@ class IllustrationPlaceholder extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-  color: backgroundColor ?? colorScheme.surfaceContainerHighest,
+        color: backgroundColor ?? colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(kCardBorderRadius),
       ),
       alignment: Alignment.center,

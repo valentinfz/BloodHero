@@ -31,10 +31,8 @@ class AlertsScreen extends StatelessWidget {
               Text('Distancia: ${alert.distance}'),
             ],
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.pushNamed(
-              AlertDetailScreen.name,
-              extra: alert.center,
-            ),
+            onTap: () =>
+                context.pushNamed(AlertDetailScreen.name, extra: alert.center),
           );
         },
         separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),

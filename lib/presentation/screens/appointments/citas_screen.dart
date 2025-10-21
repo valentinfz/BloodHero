@@ -38,9 +38,7 @@ class CitasScreen extends StatelessWidget {
             trailing: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.chevron_right),
-              ],
+              children: [const Icon(Icons.chevron_right)],
             ),
             onTap: () => context.pushNamed(
               AppointmentDetailScreen.name,

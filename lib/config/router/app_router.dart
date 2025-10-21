@@ -3,11 +3,10 @@ import 'package:bloodhero/presentation/screens/splash/splash_screen.dart';
 import 'package:bloodhero/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:bloodhero/presentation/screens/auth/login_screen.dart';
 import 'package:bloodhero/presentation/screens/auth/register_screen.dart';
-import 'package:bloodhero/presentation/screens/auth/complete_profile_screen.dart';
 import 'package:bloodhero/presentation/screens/auth/forgot_password_screen.dart';
 import 'package:bloodhero/presentation/screens/permissions/permissions_screen.dart';
 import 'package:bloodhero/presentation/screens/home/home_screen.dart';
-import 'package:bloodhero/presentation/screens/map/map_screen.dart';
+import 'package:bloodhero/presentation/screens/centers/centers_screen.dart';
 import 'package:bloodhero/presentation/screens/filters/filter_screen.dart';
 import 'package:bloodhero/presentation/screens/centers/center_detail_screen.dart';
 import 'package:bloodhero/presentation/screens/centers/center_reviews_screen.dart';
@@ -54,11 +53,6 @@ final appRouter = GoRouter(
       path: '/register',
       name: RegisterScreen.name,
       builder: (context, state) => const RegisterScreen(),
-    ),
-    GoRoute(
-      path: '/complete-profile',
-      name: CompleteProfileScreen.name,
-      builder: (context, state) => const CompleteProfileScreen(),
     ),
     GoRoute(
       path: '/forgot-password',
@@ -135,7 +129,11 @@ final appRouter = GoRouter(
         final center = data?['center'] as String? ?? 'Hospital Central';
         final date = data?['date'] as DateTime? ?? DateTime.now();
         final time = data?['time'] as String? ?? '09:00';
-        return AppointmentBookingConfirmScreen(centerName: center, date: date, time: time);
+        return AppointmentBookingConfirmScreen(
+          centerName: center,
+          date: date,
+          time: time,
+        );
       },
     ),
     GoRoute(
@@ -146,7 +144,11 @@ final appRouter = GoRouter(
         final center = data?['center'] ?? 'Hospital Central';
         final date = data?['date'] ?? '12/11/2025';
         final time = data?['time'] ?? '10:30';
-        return AppointmentConfirmationScreen(center: center, date: date, time: time);
+        return AppointmentConfirmationScreen(
+          center: center,
+          date: date,
+          time: time,
+        );
       },
     ),
     GoRoute(

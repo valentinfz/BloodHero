@@ -34,15 +34,15 @@ class AppButton extends StatelessWidget {
     AppButtonSize size = AppButtonSize.medium,
     double? width,
   }) : this._(
-          type: AppButtonType.primary,
-          text: text,
-          onPressed: onPressed,
-          expanded: expanded,
-          icon: icon,
-          size: size,
-          width: width,
-      key: key,
-        );
+         type: AppButtonType.primary,
+         text: text,
+         onPressed: onPressed,
+         expanded: expanded,
+         icon: icon,
+         size: size,
+         width: width,
+         key: key,
+       );
 
   const AppButton.secondary({
     Key? key,
@@ -53,15 +53,15 @@ class AppButton extends StatelessWidget {
     AppButtonSize size = AppButtonSize.medium,
     double? width,
   }) : this._(
-          type: AppButtonType.secondary,
-          text: text,
-          onPressed: onPressed,
-          expanded: expanded,
-          icon: icon,
-          size: size,
-          width: width,
-      key: key,
-        );
+         type: AppButtonType.secondary,
+         text: text,
+         onPressed: onPressed,
+         expanded: expanded,
+         icon: icon,
+         size: size,
+         width: width,
+         key: key,
+       );
 
   const AppButton.text({
     Key? key,
@@ -72,15 +72,15 @@ class AppButton extends StatelessWidget {
     AppButtonSize size = AppButtonSize.small,
     double? width,
   }) : this._(
-          type: AppButtonType.text,
-          text: text,
-          onPressed: onPressed,
-          expanded: expanded,
-          icon: icon,
-          size: size,
-          width: width,
-          key: key,
-        );
+         type: AppButtonType.text,
+         text: text,
+         onPressed: onPressed,
+         expanded: expanded,
+         icon: icon,
+         size: size,
+         width: width,
+         key: key,
+       );
 
   double get _height {
     switch (size) {
@@ -94,25 +94,25 @@ class AppButton extends StatelessWidget {
   }
 
   ButtonStyle get _primaryStyle => FilledButton.styleFrom(
-        minimumSize: Size.fromHeight(_height),
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(kCardBorderRadius),
-        ),
-      );
+    minimumSize: Size.fromHeight(_height),
+    textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(kCardBorderRadius),
+    ),
+  );
 
   ButtonStyle get _secondaryStyle => OutlinedButton.styleFrom(
-        minimumSize: Size.fromHeight(_height),
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(kCardBorderRadius),
-        ),
-      );
+    minimumSize: Size.fromHeight(_height),
+    textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(kCardBorderRadius),
+    ),
+  );
 
   ButtonStyle get _textStyle => TextButton.styleFrom(
-        minimumSize: Size.fromHeight(_height),
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-      );
+    minimumSize: Size.fromHeight(_height),
+    textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+  );
 
   Widget _buildChild() {
     if (icon == null) {
@@ -121,11 +121,7 @@ class AppButton extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon),
-        const SizedBox(width: 8),
-        Text(text),
-      ],
+      children: [Icon(icon), const SizedBox(width: 8), Text(text)],
     );
   }
 
@@ -158,9 +154,6 @@ class AppButton extends StatelessWidget {
         break;
     }
 
-    return SizedBox(
-      width: expanded ? double.infinity : width,
-      child: button,
-    );
+    return SizedBox(width: expanded ? double.infinity : width, child: button);
   }
 }

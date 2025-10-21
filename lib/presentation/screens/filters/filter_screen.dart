@@ -11,7 +11,16 @@ class FilterScreen extends StatefulWidget {
 class _FilterScreenState extends State<FilterScreen> {
   bool showUrgentOnly = true;
   RangeValues distanceRange = const RangeValues(0, 10);
-  final List<String> bloodTypes = const ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'];
+  final List<String> bloodTypes = const [
+    'O-',
+    'O+',
+    'A-',
+    'A+',
+    'B-',
+    'B+',
+    'AB-',
+    'AB+',
+  ];
   final Set<String> selectedBloodTypes = {'O-', 'A+'};
 
   @override
@@ -45,7 +54,10 @@ class _FilterScreenState extends State<FilterScreen> {
               title: const Text('Sólo alertas urgentes'),
             ),
             const SizedBox(height: 24),
-            const Text('Distancia (km)', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Distancia (km)',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             RangeSlider(
               values: distanceRange,
               max: 30,
@@ -57,7 +69,10 @@ class _FilterScreenState extends State<FilterScreen> {
               onChanged: (value) => setState(() => distanceRange = value),
             ),
             const SizedBox(height: 24),
-            const Text('Tipos de sangre', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Tipos de sangre',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 12,
