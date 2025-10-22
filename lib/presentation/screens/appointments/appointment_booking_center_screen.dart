@@ -47,7 +47,7 @@ class AppointmentBookingCenterScreen extends ConsumerWidget {
                 ),
               );
             },
-            separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
+            separatorBuilder: (context, index) => const SizedBox(height: kCardSpacing),
             itemCount: centers.length,
           );
         },

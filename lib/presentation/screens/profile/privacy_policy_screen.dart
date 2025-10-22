@@ -50,7 +50,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ],
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(height: 20),
+  separatorBuilder: (context, index) => const SizedBox(height: 20),
         itemCount: sections.length,
       ),
     );

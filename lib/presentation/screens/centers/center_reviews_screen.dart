@@ -84,7 +84,7 @@ class CenterReviewsScreen extends StatelessWidget {
             ),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
+  separatorBuilder: (context, index) => const SizedBox(height: 16),
         itemCount: reviews.length,
       ),
     );

@@ -5,7 +5,7 @@ import 'package:bloodhero/config/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 void main() {
-  GoogleFonts.config.allowRuntimeFetching = false;
+  GoogleFonts.config.allowRuntimeFetching = true;
   runApp(
     // ProviderScope es el widget que almacena el estado de todos los providers.
     // Es necesario para que Riverpod funcione.

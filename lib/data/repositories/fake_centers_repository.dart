@@ -38,6 +38,8 @@ class FakeCentersRepository implements CentersRepository {
           'Cafetería',
         ],
         imageUrl: '',
+        latitude: -34.6037,
+        longitude: -58.3816,
       );
     }
     return CenterDetailEntity(
@@ -46,6 +48,8 @@ class FakeCentersRepository implements CentersRepository {
       schedule: 'Lun a Vie 8:00 - 18:00',
       services: ['Extracción de sangre y plasma'],
       imageUrl: '',
+      latitude: -34.6090,
+      longitude: -58.3845,
     );
   }
 

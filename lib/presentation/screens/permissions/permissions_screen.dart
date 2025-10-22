@@ -27,24 +27,35 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
     final slides = <_PermissionSlideData>[
       _PermissionSlideData(
         title: '¿Podemos usar tu ubicación?',
-        subtitle: 'Para mostrarte centros cercanos.',
-        buttonText: 'Acepto',
-        onPressed: () {
+        subtitle: 'Para mostrarte centros cercanos y calcular la distancia estimada al donar.',
+        primaryButtonText: 'Permitir ubicación',
+        onPrimaryPressed: () {
           // TODO: Implementar lógica para solicitar permiso de ubicación
           pageController.nextPage(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
           );
         },
+        secondaryButtonText: 'No por ahora',
+        onSecondaryPressed: () {
+          pageController.nextPage(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        },
+        helperText: 'Podrás activarla más adelante desde Ajustes o la sección de permisos de la app.',
       ),
       _PermissionSlideData(
         title: '¿Activar notificaciones?',
-        subtitle: 'Recordatorios y alertas urgentes.',
-        buttonText: 'Acepto',
-        onPressed: () {
+        subtitle: 'Recordatorios de turnos y alertas importantes para tus donaciones.',
+        primaryButtonText: 'Activar notificaciones',
+        onPrimaryPressed: () {
           // TODO: Implementar lógica para solicitar permiso de notificaciones
           context.goNamed(HomeScreen.name);
         },
+        secondaryButtonText: 'Quizás más tarde',
+        onSecondaryPressed: () => context.goNamed(HomeScreen.name),
+        helperText: 'Si cambiás de idea podés activarlas luego desde la configuración del sistema.',
       ),
     ];
 
@@ -59,8 +70,11 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
           return _PermissionSlide(
             title: slide.title,
             subtitle: slide.subtitle,
-            buttonText: slide.buttonText,
-            onPressed: slide.onPressed,
+            primaryButtonText: slide.primaryButtonText,
+            onPrimaryPressed: slide.onPrimaryPressed,
+            secondaryButtonText: slide.secondaryButtonText,
+            onSecondaryPressed: slide.onSecondaryPressed,
+            helperText: slide.helperText,
           );
         },
       ),
@@ -71,14 +85,20 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
 class _PermissionSlide extends StatelessWidget {
   final String title;
   final String subtitle;
-  final String buttonText;
-  final VoidCallback onPressed;
+  final String primaryButtonText;
+  final VoidCallback onPrimaryPressed;
+  final String? secondaryButtonText;
+  final VoidCallback? onSecondaryPressed;
+  final String? helperText;
 
   const _PermissionSlide({
     required this.title,
     required this.subtitle,
-    required this.buttonText,
-    required this.onPressed,
+    required this.primaryButtonText,
+    required this.onPrimaryPressed,
+    this.secondaryButtonText,
+    this.onSecondaryPressed,
+    this.helperText,
   });
 
   @override
@@ -102,7 +122,22 @@ class _PermissionSlide extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const Spacer(flex: 3),
-          AppButton.primary(text: buttonText, onPressed: onPressed),
+          AppButton.primary(text: primaryButtonText, onPressed: onPrimaryPressed),
+          if (secondaryButtonText != null) ...[
+            const SizedBox(height: kCardSpacing),
+            AppButton.secondary(
+              text: secondaryButtonText!,
+              onPressed: onSecondaryPressed,
+            ),
+          ],
+          if (helperText != null) ...[
+            const SizedBox(height: kCardSpacing),
+            Text(
+              helperText!,
+              style: textTheme.bodySmall?.copyWith(color: Colors.black54),
+              textAlign: TextAlign.center,
+            ),
+          ],
           const SizedBox(height: kCardSpacing),
         ],
       ),
@@ -114,13 +149,19 @@ class _PermissionSlide extends StatelessWidget {
 class _PermissionSlideData {
   final String title;
   final String subtitle;
-  final String buttonText;
-  final VoidCallback onPressed;
+  final String primaryButtonText;
+  final VoidCallback onPrimaryPressed;
+  final String? secondaryButtonText;
+  final VoidCallback? onSecondaryPressed;
+  final String? helperText;
 
   _PermissionSlideData({
     required this.title,
     required this.subtitle,
-    required this.buttonText,
-    required this.onPressed,
+    required this.primaryButtonText,
+    required this.onPrimaryPressed,
+    this.secondaryButtonText,
+    this.onSecondaryPressed,
+    this.helperText,
   });
 }

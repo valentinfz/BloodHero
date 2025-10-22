@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:bloodhero/domain/entities/appointment_detail_entity.dart';
 import '../../providers/appointments_provider.dart';
+import 'appointment_booking_date_screen.dart';
+import 'citas_screen.dart';
 
 class AppointmentDetailScreen extends ConsumerWidget {
   static const String name = 'appointment_detail_screen';
@@ -47,9 +51,7 @@ class AppointmentDetailScreen extends ConsumerWidget {
                 ...appointment.reminders.map((reminder) => Text('• $reminder')),
                 const Spacer(),
                 FilledButton(
-                  onPressed: () {
-                    // TODO: Implementar reprogramación
-                  },
+                  onPressed: () => _handleReschedule(context, appointment),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                   ),
@@ -57,9 +59,7 @@ class AppointmentDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: () {
-                    // TODO: Implementar cancelación
-                  },
+                  onPressed: () => _handleCancel(context),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                   ),
@@ -71,6 +71,51 @@ class AppointmentDetailScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+}
+
+void _handleReschedule(
+  BuildContext context,
+  AppointmentDetailEntity appointment,
+) {
+  context.pushNamed(
+    AppointmentBookingDateScreen.name,
+    extra: appointment.center,
+  );
+}
+
+Future<void> _handleCancel(BuildContext context) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Cancelar turno'),
+      content: const Text(
+        'Si cancelás, vas a liberar el turno reservado. ¿Querés continuar?',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('Mantener turno'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: const Text('Cancelar turno'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed == true) {
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tu turno fue cancelado.')),
+    );
+    if (!context.mounted) {
+      return;
+    }
+    context.goNamed(CitasScreen.name);
   }
 }
 

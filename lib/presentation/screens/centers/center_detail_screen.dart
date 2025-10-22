@@ -1,7 +1,9 @@
 import 'package:bloodhero/presentation/screens/appointments/appointment_booking_date_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 import '../../providers/centers_provider.dart';
 import 'center_reviews_screen.dart';
 
@@ -29,6 +31,8 @@ class CenterDetailScreen extends ConsumerWidget {
         error: (error, stack) => Center(child: Text('Error: $error')),
         data: (center) {
           // Construimos la UI con los datos.
+          final centerPosition = LatLng(center.latitude, center.longitude);
+
           return CustomScrollView(
             slivers: [
               SliverAppBar(
@@ -51,12 +55,41 @@ class CenterDetailScreen extends ConsumerWidget {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          height: 180,
+                        child: SizedBox(
+                          height: 220,
                           width: double.infinity,
-                          color: Colors.grey[300],
-                          // usar imagen aca
-                          child: const Center(child: Text('Imagen del centro')),
+                          child: FlutterMap(
+                            options: MapOptions(
+                              initialCenter: centerPosition,
+                              initialZoom: 15,
+                              interactionOptions: const InteractionOptions(
+                                flags:
+                                    InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                              ),
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'com.example.bloodhero',
+                              ),
+                              MarkerLayer(
+                                markers: [
+                                  Marker(
+                                    width: 40,
+                                    height: 40,
+                                    point: centerPosition,
+                                    alignment: Alignment.topCenter,
+                                    child: const Icon(
+                                      Icons.location_pin,
+                                      size: 36,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),

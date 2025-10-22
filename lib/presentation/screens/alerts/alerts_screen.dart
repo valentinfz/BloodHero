@@ -35,7 +35,7 @@ class AlertsScreen extends StatelessWidget {
                 context.pushNamed(AlertDetailScreen.name, extra: alert.center),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
+  separatorBuilder: (context, index) => const SizedBox(height: kCardSpacing),
         itemCount: alerts.length,
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 3),
