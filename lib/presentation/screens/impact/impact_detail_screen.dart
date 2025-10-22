@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+// REVISAR SI SE QUEDA O NO
+
 class ImpactDetailScreen extends StatelessWidget {
   static const String name = 'impact_detail_screen';
   final String achievementTitle;

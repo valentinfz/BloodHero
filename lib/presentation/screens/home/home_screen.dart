@@ -1,16 +1,19 @@
+import 'package:bloodhero/domain/entities/alert_entity.dart';
+import 'package:bloodhero/presentation/providers/home_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../providers/home_providers.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
+import '../../widgets/shared/app_button.dart';
 import '../appointments/citas_screen.dart';
+import '../centers/centers_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   static const String name = 'home_screen';
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -30,32 +33,44 @@ class HomeScreen extends StatelessWidget {
               SizedBox(height: 24),
               _NearbyAlertsSection(),
               SizedBox(height: 24),
-              _ImpactSection(),
-              SizedBox(height: 24),
+              _DonationTipSection(),
+              SizedBox(height: 96),
             ],
           ),
         ),
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: AppButton.primary(
+          text: 'Agendar donación',
+          onPressed: () {
+            context.goNamed(CenterScreen.name);
+            // --------------------------
+          },
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
 
+// Widgets internos:
+
 class _Header extends ConsumerWidget {
   const _Header();
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Se observa el provider del perfil de usuario
     final userProfileAsync = ref.watch(userProfileProvider);
-
-    // .when para manejar los diferentes estados
     return userProfileAsync.when(
-      // Mientras carga, no mostramos nada.
-      loading: () => const SizedBox.shrink(),
-      // Si hay un error, mostramos un saludo generico
-      error: (err, stack) => const Text('Hola'),
-      // Cuando tenemos los datos, extraemos el nombre y lo mostramos
+      loading: () => const Text(
+        'Hola...',
+        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+      ),
+      error: (err, stack) => const Text(
+        'Hola',
+        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+      ),
       data: (user) => Text(
         'Hola, ${user.name}',
         style: const TextStyle(
@@ -70,14 +85,17 @@ class _Header extends ConsumerWidget {
 
 class _NextAppointmentCard extends ConsumerWidget {
   const _NextAppointmentCard();
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appointmentAsync = ref.watch(nextAppointmentProvider);
-
     return appointmentAsync.when(
       loading: () => const _LoadingCard(height: 120),
-      error: (err, stack) => Text('Error: $err'),
+      error: (err, stack) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text('Error al cargar cita: $err'),
+        ),
+      ),
       data: (appointment) => Card(
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -124,11 +142,9 @@ class _NextAppointmentCard extends ConsumerWidget {
 
 class _NearbyAlertsSection extends ConsumerWidget {
   const _NearbyAlertsSection();
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final alertsAsync = ref.watch(nearbyAlertsProvider);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -140,16 +156,21 @@ class _NearbyAlertsSection extends ConsumerWidget {
         SizedBox(
           height: 100,
           child: alertsAsync.when(
-            loading: () => const _LoadingCard(width: 160),
-            error: (err, stack) => Text('Error: $err'),
-            data: (alerts) => ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: alerts.length,
-              itemBuilder: (context, index) {
-                final alert = alerts[index];
-                return _AlertCard(alert: alert);
-              },
-            ),
+            loading: () => const Center(child: _LoadingCard(width: 160)),
+            error: (err, stack) => Center(child: Text('Error: $err')),
+            data: (alerts) {
+              if (alerts.isEmpty) {
+                return const Center(child: Text('No hay alertas cerca.'));
+              }
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: alerts.length,
+                itemBuilder: (context, index) {
+                  final alert = alerts[index];
+                  return _AlertCard(alert: alert);
+                },
+              );
+            },
           ),
         ),
       ],
@@ -158,9 +179,8 @@ class _NearbyAlertsSection extends ConsumerWidget {
 }
 
 class _AlertCard extends StatelessWidget {
-  final dynamic alert;
+  final AlertEntity alert;
   const _AlertCard({required this.alert});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -196,37 +216,48 @@ class _AlertCard extends StatelessWidget {
   }
 }
 
-class _ImpactSection extends ConsumerWidget {
-  const _ImpactSection();
-
+class _DonationTipSection extends ConsumerWidget {
+  const _DonationTipSection();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final impactAsync = ref.watch(userImpactProvider);
-
-    return impactAsync.when(
-      loading: () => const _LoadingCard(height: 120),
-      error: (err, stack) => Text('Error: $err'),
-      data: (impact) => Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
+    final tipAsync = ref.watch(donationTipProvider);
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: tipAsync.when(
+        loading: () => const _LoadingCard(height: 80),
+        error: (err, stack) => const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('No se pudo cargar el consejo.'),
+        ),
+        data: (tip) => Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              const Text(
-                'Tu impacto',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Icon(
+                Icons.lightbulb_outline,
+                color: Theme.of(context).colorScheme.primary,
+                size: 30,
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Vidas ayudadas: ${impact.livesHelped}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Ranking: ${impact.ranking}',
-                style: const TextStyle(fontSize: 16),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Consejo del día',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      tip,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -243,11 +274,10 @@ class _LoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: height,
       width: width,
-      alignment: Alignment.center,
-      child: const CircularProgressIndicator(),
+      child: const Center(child: CircularProgressIndicator()),
     );
   }
 }

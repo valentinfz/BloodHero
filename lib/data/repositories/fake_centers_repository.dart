@@ -6,6 +6,8 @@ import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/entities/center_entity.dart';
 import '../../domain/entities/center_detail_entity.dart';
+import '../../domain/entities/user_impact_entity.dart'; // Importamos entidad de impacto
+import '../../domain/entities/achievement_entity.dart'; // Importamos entidad de logros
 import '../../domain/repositories/centers_repository.dart';
 
 // Esta clase es la implementación "real" (pero con datos falsos) de nuestro contrato.
@@ -121,6 +123,11 @@ class FakeCentersRepository implements CentersRepository {
         distance: '5 km',
         expiration: 'vence en 2 días',
       ),
+      AlertEntity(
+        bloodType: 'B-',
+        distance: '8 km',
+        expiration: 'vence en 3 días',
+      ),
     ];
   }
 
@@ -148,5 +155,57 @@ class FakeCentersRepository implements CentersRepository {
       'Cita agendada para $centerName el ${date.day}/${date.month} a las $time',
     );
     return;
+  }
+
+  @override
+  Future<List<String>> getDonationTips() async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    return [
+      'Recordá hidratarte bien antes y después de donar.',
+      'Avisá al personal si te sentís mareado en algún momento.',
+      'Evitá hacer actividad física intensa el día de la donación.',
+    ];
+  }
+
+  @override
+  Future<UserImpactEntity> getUserImpactStats() async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    // El ranking podría venir del perfil de usuario. Aca esta fijo usamos valores fijos.
+    return UserImpactEntity(livesHelped: 12, ranking: 'Donador Leal');
+  }
+
+  @override
+  Future<List<AchievementEntity>> getAchievements() async {
+    await Future.delayed(const Duration(milliseconds: 900));
+    return const [
+      AchievementEntity(
+        title: 'Primera Donación',
+        description: '¡Gracias por dar el primer paso!',
+        iconName: 'looks_one',
+      ),
+      AchievementEntity(
+        title: 'Donador Frecuente',
+        description: '3 donaciones en los últimos 6 meses',
+      ),
+      AchievementEntity(
+        title: 'Héroe en Emergencia',
+        description: 'Respondiste a 2 alertas urgentes',
+        iconName: 'local_hospital',
+      ),
+      AchievementEntity(
+        title: 'Constancia de Acero',
+        description: '5 donaciones realizadas',
+        iconName: 'shield',
+      ),
+      AchievementEntity(
+        title: 'Embajador',
+        description: 'Invitaste a 5 amigos a donar',
+        iconName: 'group',
+      ),
+      AchievementEntity(
+        title: 'Donador Leal',
+        description: 'Más de 10 donaciones en total',
+      ),
+    ];
   }
 }

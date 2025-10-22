@@ -1,53 +1,65 @@
+import 'package:bloodhero/presentation/providers/home_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'alert_detail_screen.dart';
 import 'package:bloodhero/presentation/widgets/custom_bottom_nav_bar.dart';
 import 'package:bloodhero/presentation/widgets/shared/info_card.dart';
 
-class AlertsScreen extends StatelessWidget {
+class AlertsScreen extends ConsumerWidget {
   static const String name = 'alerts_screen';
   const AlertsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final alerts = const [
-      _AlertCardData('Hospital Central', 'O-', 'Urgente', '2 km'),
-      _AlertCardData('Clínica Norte', 'A+', 'Dentro de 24 hs', '5 km'),
-      _AlertCardData('Banco de Sangre Sur', 'B-', 'Dentro de 48 hs', '7 km'),
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Se observa el nearbyAlertsProvider que ya existía en home_providers
+    final alertsAsync = ref.watch(nearbyAlertsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Alertas activas')),
-      body: ListView.separated(
-        padding: kScreenPadding,
-        itemBuilder: (context, index) {
-          final alert = alerts[index];
-          return InfoCard(
-            title: alert.center,
-            body: [
-              Text('Tipo de sangre: ${alert.bloodType}'),
-              Text('Estado: ${alert.status}'),
-              Text('Distancia: ${alert.distance}'),
-            ],
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () =>
-                context.pushNamed(AlertDetailScreen.name, extra: alert.center),
+      // .when para manejar los estados
+      body: alertsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Error: $error')),
+        data: (alerts) {
+          // Si no hay alertas, mostramos un mensaje
+          if (alerts.isEmpty) {
+            return const Center(
+              child: Text('No hay alertas activas cerca tuyo.'),
+            );
+          }
+          // Si hay alertas, construimos la lista
+          return ListView.separated(
+            padding: kScreenPadding,
+            itemBuilder: (context, index) {
+              final alert = alerts[index];
+              // Usamos AlertEntity directamente
+              return InfoCard(
+                title:
+                    'Se necesita ${alert.bloodType}', // Título más descriptivo
+                body: [
+                  Text('Distancia: ${alert.distance}'),
+                  Text('Vence: ${alert.expiration}'),
+                  // Podríamos añadir el centro si lo tuviéramos en AlertEntity
+                ],
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.pushNamed(
+                  AlertDetailScreen.name,
+                  extra:
+                      'Centro de Ejemplo', // TODO: Pasar el nombre real del centro
+                ),
+              );
+            },
+            separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
+            itemCount: alerts.length,
           );
         },
-  separatorBuilder: (context, index) => const SizedBox(height: kCardSpacing),
-        itemCount: alerts.length,
       ),
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 3),
+      // TODO: Ajustar el currentIndex si es necesario para esta pantalla
+      bottomNavigationBar: const CustomBottomNavBar(
+        currentIndex: 0,
+      ), // Asumo 0 por ahora
     );
   }
-}
-
-class _AlertCardData {
-  final String center;
-  final String bloodType;
-  final String status;
-  final String distance;
-
-  const _AlertCardData(this.center, this.bloodType, this.status, this.distance);
 }

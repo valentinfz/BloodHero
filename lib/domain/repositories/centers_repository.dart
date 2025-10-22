@@ -4,8 +4,10 @@ import '../entities/appointment_entity.dart';
 import '../entities/center_detail_entity.dart';
 import '../entities/center_entity.dart';
 import '../entities/user_entity.dart';
+import '../entities/user_impact_entity.dart';
+import '../entities/achievement_entity.dart';
 
-// Este es el "contrato" que cualquier repositorio de datos (ya sea el falso o Firebase) debe cumplir.
+// Este es el "contrato" que cualquier repositorio de datos debe cumplir.
 abstract class CentersRepository {
   // Métodos para Centros
   Future<List<CenterEntity>> getCenters();
@@ -24,7 +26,10 @@ abstract class CentersRepository {
   // Métodos para el Home
   Future<AppointmentEntity> getNextAppointment();
   Future<List<AlertEntity>> getNearbyAlerts();
-
-  // Métodos de Usuario
   Future<UserEntity> getUserProfile();
+  Future<List<String>> getDonationTips();
+
+ // Métodos para el Impacto y logros del usuario
+  Future<UserImpactEntity> getUserImpactStats();
+  Future<List<AchievementEntity>> getAchievements();
 }

@@ -9,14 +9,14 @@ final centersRepositoryProvider = Provider<CentersRepository>((ref) {
   return FakeCentersRepository();
 });
 
-// 2. Provider para la lista de todos los centros:
+// Provider para la lista de todos los centros:
 // Llama al método getCenters() del repositorio actual.
 final centersProvider = FutureProvider.autoDispose<List<CenterEntity>>((ref) {
   final repository = ref.watch(centersRepositoryProvider);
   return repository.getCenters();
 });
 
-// 3. Provider.family para obtener los detalles de UN centro específico:
+// Provider.family para obtener los detalles de UN centro específico:
 // Recibe el nombre del centro como parámetro y llama al método getCenterDetails().
 final centerDetailProvider = FutureProvider.autoDispose
     .family<CenterDetailEntity, String>((ref, centerName) {

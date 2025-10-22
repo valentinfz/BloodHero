@@ -18,7 +18,7 @@ final appointmentDetailProvider = FutureProvider.autoDispose
 
 //PROVIDERS PARA EL FLUJO DE AGENDAR CITA:
 
-// 1. Clase auxiliar para pasar múltiples parámetros al provider.family
+// Clase auxiliar para pasar múltiples parámetros al provider.family
 class AvailableTimesParams {
   final String centerName;
   final DateTime date;
@@ -37,7 +37,7 @@ class AvailableTimesParams {
   int get hashCode => centerName.hashCode ^ date.hashCode;
 }
 
-// 2. Provider.family para obtener los horarios disponibles
+// Provider.family para obtener los horarios disponibles
 final availableTimesProvider = FutureProvider.autoDispose
     .family<List<String>, AvailableTimesParams>((ref, params) {
       final repository = ref.watch(centersRepositoryProvider);
