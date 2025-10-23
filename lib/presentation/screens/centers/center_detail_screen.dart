@@ -1,155 +1,151 @@
-import 'package:bloodhero/presentation/screens/appointments/appointment_booking_date_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
-import '../../providers/centers_provider.dart';
-import 'center_reviews_screen.dart';
+import 'package:bloodhero/presentation/screens/appointments/appointment_booking_date_screen.dart';
+//import 'package:bloodhero/presentation/screens/centers/center_reviews_screen.dart';
+import 'package:bloodhero/presentation/screens/centers/centers_loader.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class CenterDetailScreen extends ConsumerWidget {
+
+class CenterDetailScreen extends StatelessWidget {
   static const String name = 'center_detail_screen';
+
+  final MapCenter? center;
   final String? centerName;
 
-  const CenterDetailScreen({super.key, this.centerName});
+  const CenterDetailScreen({
+    super.key,
+    this.center,
+    this.centerName,
+  });
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (centerName == null) {
-      return const Scaffold(
-        body: Center(child: Text('Error: No se especificó un centro.')),
-      );
-    }
+  Widget _centerImage(BuildContext context) {
+    const placeholder = 'assets/images/centers/placeholder.jpg';
+    final src = center?.image ?? placeholder;
 
-    // Observamos el provider, pasándole el nombre del centro que queremos cargar.
-    final centerDetailAsync = ref.watch(centerDetailProvider(centerName!));
-
-    return Scaffold(
-      // .when para manejar los estados de carga, error y datos
-      body: centerDetailAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
-        data: (center) {
-          // Construimos la UI con los datos.
-          final centerPosition = LatLng(center.latitude, center.longitude);
-
-          return CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                title: Text(center.name),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.reviews_outlined),
-                    onPressed: () => context.pushNamed(
-                      CenterReviewsScreen.name,
-                      extra: center.name,
-                    ),
-                  ),
-                ],
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: SizedBox(
-                          height: 220,
-                          width: double.infinity,
-                          child: FlutterMap(
-                            options: MapOptions(
-                              initialCenter: centerPosition,
-                              initialZoom: 15,
-                              interactionOptions: const InteractionOptions(
-                                flags:
-                                    InteractiveFlag.pinchZoom | InteractiveFlag.drag,
-                              ),
-                            ),
-                            children: [
-                              TileLayer(
-                                urlTemplate:
-                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                userAgentPackageName: 'com.example.bloodhero',
-                              ),
-                              MarkerLayer(
-                                markers: [
-                                  Marker(
-                                    width: 40,
-                                    height: 40,
-                                    point: centerPosition,
-                                    alignment: Alignment.topCenter,
-                                    child: const Icon(
-                                      Icons.location_pin,
-                                      size: 36,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      _InfoRow(
-                        icon: Icons.location_on_outlined,
-                        text: center.address,
-                      ),
-                      const SizedBox(height: 12),
-                      _InfoRow(
-                        icon: Icons.schedule_outlined,
-                        text: center.schedule,
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Servicios disponibles',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Usamos los servicios que vienen del provider
-                      ...center.services.map((service) => _BulletItem(service)),
-                      const SizedBox(height: 24),
-                      FilledButton.icon(
-                        onPressed: () => context.pushNamed(
-                          AppointmentBookingDateScreen.name,
-                          extra: center.name,
-                        ),
-                        icon: const Icon(Icons.calendar_month),
-                        label: const Text('Agendar donación'),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(52),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+    final isNetwork = src.startsWith('http');
+    final imageWidget = isNetwork
+        ? Image.network(
+            src,
+            fit: BoxFit.cover,
+            height: 180,
+            width: double.infinity,
+            errorBuilder: (_, __, ___) => Image.asset(
+              placeholder,
+              fit: BoxFit.cover,
+              height: 180,
+              width: double.infinity,
+            ),
+          )
+        : Image.asset(
+            src,
+            fit: BoxFit.cover,
+            height: 180,
+            width: double.infinity,
           );
-        },
-      ),
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: imageWidget,
     );
   }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _InfoRow({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: const Color(0xFFC62828)),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text)),
-      ],
+    final title = center?.name ?? centerName ?? 'Centro de donación';
+    final address = center?.address ?? 'Av. Principal 123, Ciudad Autónoma de Buenos Aires';
+    final lat = center?.lat;
+    final lng = center?.lng;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+actions: [
+  IconButton(
+    icon: const Icon(Icons.reviews_outlined),
+    tooltip: 'Ver reseñas en Google',
+    onPressed: () async {
+      final query = Uri.encodeComponent('$title reseñas');
+      final uri = Uri.parse('https://www.google.com/search?q=$query');
+
+            ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Abriendo reseñas en Google...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      await Future.delayed(const Duration(milliseconds: 400));
+
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo abrir la búsqueda en Google')),
+        );
+      }
+    },
+  ),
+],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _centerImage(context),
+
+            const SizedBox(height: 20),
+
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined, color: Color(0xFFC62828)),
+                const SizedBox(width: 8),
+                Expanded(child: Text(address)),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            if (lat != null && lng != null)
+              Row(
+                children: [
+                  const Icon(Icons.map_outlined, color: Color(0xFFC62828)),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('Ubicación: $lat, $lng')),
+                ],
+              ),
+
+            const SizedBox(height: 12),
+            Row(
+              children: const [
+                Icon(Icons.schedule_outlined, color: Color(0xFFC62828)),
+                SizedBox(width: 8),
+                Expanded(child: Text('Lun a Vie 8:00 - 18:00 · Sáb 9:00 - 13:00')),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            const Text(
+              'Servicios disponibles',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            const _BulletItem('Extracción de sangre y plasma'),
+            const _BulletItem('Estacionamiento sin cargo'),
+            const _BulletItem('Atención priorizada para donadores frecuentes'),
+            const SizedBox(height: 24),
+
+            FilledButton.icon(
+              onPressed: () =>
+                  context.pushNamed(AppointmentBookingDateScreen.name, extra: title),
+              icon: const Icon(Icons.calendar_month),
+              label: const Text('Agendar donación'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -165,10 +161,7 @@ class _BulletItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '• ',
-            style: TextStyle(fontSize: 20, color: Color(0xFFC62828)),
-          ),
+          const Text('• ', style: TextStyle(fontSize: 20, color: Color(0xFFC62828))),
           Expanded(child: Text(text)),
         ],
       ),

@@ -45,7 +45,7 @@ class HomeScreen extends ConsumerWidget {
         child: AppButton.primary(
           text: 'Agendar donación',
           onPressed: () {
-            context.goNamed(CenterScreen.name);
+            context.goNamed(MapScreen.name);
             // --------------------------
           },
         ),
