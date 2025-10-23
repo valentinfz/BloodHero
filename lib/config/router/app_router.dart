@@ -9,7 +9,6 @@ import 'package:bloodhero/presentation/screens/home/home_screen.dart';
 import 'package:bloodhero/presentation/screens/centers/centers_screen.dart';
 import 'package:bloodhero/presentation/screens/filters/filter_screen.dart';
 import 'package:bloodhero/presentation/screens/centers/center_detail_screen.dart';
-import 'package:bloodhero/presentation/screens/centers/center_reviews_screen.dart';
 import 'package:bloodhero/presentation/screens/appointments/appointment_booking_center_screen.dart';
 import 'package:bloodhero/presentation/screens/appointments/appointment_booking_date_screen.dart';
 import 'package:bloodhero/presentation/screens/appointments/appointment_booking_time_screen.dart';
@@ -29,6 +28,7 @@ import 'package:bloodhero/presentation/screens/profile/security_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/help_center_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/checkin_qr_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/privacy_policy_screen.dart';
+import 'package:bloodhero/presentation/screens/centers/centers_loader.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -70,8 +70,8 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/centers',
-      name: CenterScreen.name,
-      builder: (context, state) => const CenterScreen(),
+      name: MapScreen.name,
+      builder: (context, state) => const MapScreen(),
     ),
     GoRoute(
       path: '/filters',
@@ -82,17 +82,15 @@ final appRouter = GoRouter(
       path: '/center-detail',
       name: CenterDetailScreen.name,
       builder: (context, state) {
-        final centerName = state.extra as String?;
-        return CenterDetailScreen(centerName: centerName);
-      },
-    ),
-    GoRoute(
-      path: '/center-reviews',
-      name: CenterReviewsScreen.name,
-      builder: (context, state) {
-        final centerName = state.extra as String?;
-        return CenterReviewsScreen(centerName: centerName);
-      },
+    final extra = state.extra;
+
+    if (extra is MapCenter) {
+      return CenterDetailScreen(center: extra);
+    } else {
+      final centerName = extra as String?;
+      return CenterDetailScreen(centerName: centerName);
+    }
+  },
     ),
     GoRoute(
       path: '/appointments/book/center',
