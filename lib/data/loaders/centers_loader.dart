@@ -7,7 +7,7 @@ class MapCenter {
   final String address;
   final double lat;
   final double lng;
-  final String? image; 
+  final String? image;
 
   const MapCenter({
     required this.id,
@@ -19,17 +19,19 @@ class MapCenter {
   });
 
   factory MapCenter.fromJson(Map<String, dynamic> j) => MapCenter(
-        id: j['id'] as String,
-        name: j['name'] as String,
-        address: j['address'] as String,
-        lat: (j['lat'] as num).toDouble(),
-        lng: (j['lng'] as num).toDouble(),
-        image: j['image'] as String?,
-      );
+    id: j['id'] as String,
+    name: j['name'] as String,
+    address: j['address'] as String,
+    lat: (j['lat'] as num).toDouble(),
+    lng: (j['lng'] as num).toDouble(),
+    image: j['image'] as String?,
+  );
 }
 
 Future<List<MapCenter>> loadCentersFromAsset(String path) async {
   final raw = await rootBundle.loadString(path);
   final List data = jsonDecode(raw) as List;
-  return data.map((e) => MapCenter.fromJson(e as Map<String, dynamic>)).toList();
+  return data
+      .map((e) => MapCenter.fromJson(e as Map<String, dynamic>))
+      .toList();
 }

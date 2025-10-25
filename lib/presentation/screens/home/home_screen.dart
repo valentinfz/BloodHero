@@ -45,8 +45,7 @@ class HomeScreen extends ConsumerWidget {
         child: AppButton.primary(
           text: 'Agendar donación',
           onPressed: () {
-            context.goNamed(MapScreen.name);
-            // --------------------------
+            context.goNamed(CenterScreen.name);
           },
         ),
       ),
@@ -54,8 +53,6 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
-
-// Widgets internos:
 
 class _Header extends ConsumerWidget {
   const _Header();
@@ -196,7 +193,7 @@ class _AlertCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                '${alert.bloodType} - urgente',
+                '${alert.bloodType} urgente',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

@@ -4,7 +4,6 @@ import 'package:bloodhero/presentation/screens/onboarding/onboarding_screen.dart
 import 'package:bloodhero/presentation/screens/auth/login_screen.dart';
 import 'package:bloodhero/presentation/screens/auth/register_screen.dart';
 import 'package:bloodhero/presentation/screens/auth/forgot_password_screen.dart';
-import 'package:bloodhero/presentation/screens/permissions/permissions_screen.dart';
 import 'package:bloodhero/presentation/screens/home/home_screen.dart';
 import 'package:bloodhero/presentation/screens/centers/centers_screen.dart';
 import 'package:bloodhero/presentation/screens/filters/filter_screen.dart';
@@ -28,8 +27,9 @@ import 'package:bloodhero/presentation/screens/profile/security_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/help_center_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/checkin_qr_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/privacy_policy_screen.dart';
-import 'package:bloodhero/presentation/screens/centers/centers_loader.dart';
+import 'package:bloodhero/data/loaders/centers_loader.dart';
 
+// GoRouter configuration
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
@@ -58,11 +58,7 @@ final appRouter = GoRouter(
       name: ForgotPasswordScreen.name,
       builder: (context, state) => const ForgotPasswordScreen(),
     ),
-    GoRoute(
-      path: '/permissions',
-      name: PermissionsScreen.name,
-      builder: (context, state) => const PermissionsScreen(),
-    ),
+    // Ruta '/permissions' eliminada
     GoRoute(
       path: '/home',
       name: HomeScreen.name,
@@ -70,8 +66,8 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/centers',
-      name: MapScreen.name,
-      builder: (context, state) => const MapScreen(),
+      name: CenterScreen.name,
+      builder: (context, state) => const CenterScreen(),
     ),
     GoRoute(
       path: '/filters',
@@ -82,15 +78,18 @@ final appRouter = GoRouter(
       path: '/center-detail',
       name: CenterDetailScreen.name,
       builder: (context, state) {
-    final extra = state.extra;
+        final extra = state.extra;
+        String? nameToPass; // Variable para guardar el nombre
 
-    if (extra is MapCenter) {
-      return CenterDetailScreen(center: extra);
-    } else {
-      final centerName = extra as String?;
-      return CenterDetailScreen(centerName: centerName);
-    }
-  },
+        if (extra is MapCenter) {
+          // Si recibimos MapCenter, extraemos el nombre
+          nameToPass = extra.name;
+        } else if (extra is String?) {
+          // Si recibimos String (o null), lo usamos directamente
+          nameToPass = extra;
+        }
+        return CenterDetailScreen(centerName: nameToPass);
+      },
     ),
     GoRoute(
       path: '/appointments/book/center',
@@ -126,11 +125,7 @@ final appRouter = GoRouter(
         final center = data?['center'] as String? ?? 'Hospital Central';
         final date = data?['date'] as DateTime? ?? DateTime.now();
         final time = data?['time'] as String? ?? '09:00';
-        return AppointmentBookingConfirmScreen(
-          centerName: center,
-          date: date,
-          time: time,
-        );
+        return AppointmentBookingConfirmScreen(centerName: center, date: date, time: time);
       },
     ),
     GoRoute(
@@ -141,11 +136,7 @@ final appRouter = GoRouter(
         final center = data?['center'] ?? 'Hospital Central';
         final date = data?['date'] ?? '12/11/2025';
         final time = data?['time'] ?? '10:30';
-        return AppointmentConfirmationScreen(
-          center: center,
-          date: date,
-          time: time,
-        );
+        return AppointmentConfirmationScreen(center: center, date: date, time: time);
       },
     ),
     GoRoute(

@@ -1,4 +1,3 @@
-import 'package:bloodhero/presentation/screens/permissions/permissions_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +5,7 @@ import '../../../config/theme/layout_constants.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/shared/app_button.dart';
 import '../../providers/auth_provider.dart';
+import '../home/home_screen.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   static const String name = 'register_screen';
@@ -40,13 +40,11 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     ref.listen(authProvider, (previous, next) {
       if (next == AuthState.success) {
-        context.goNamed(PermissionsScreen.name);
+        context.goNamed(HomeScreen.name);
       }
       if (next == AuthState.error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error: El email ya está registrado (demo).'),
-          ),
+          const SnackBar(content: Text('Error al crear la cuenta (demo).')),
         );
         ref.read(authProvider.notifier).resetState();
       }
@@ -93,27 +91,21 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _cityController,
                 ),
                 const SizedBox(height: kSectionSpacing),
-                AppButton.primary(
-                  text: 'Crear cuenta',
-                  onPressed: authState == AuthState.loading
-                      ? null
-                      : () {
-                          ref
-                              .read(authProvider.notifier)
-                              .register(
-                                name: _nameController.text,
-                                email: _emailController.text,
-                                password: _passwordController.text,
-                                phone: _phoneController.text,
-                                bloodType: _bloodTypeController.text,
-                                city: _cityController.text,
-                              );
-                        },
-                ),
                 if (authState == AuthState.loading)
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: CircularProgressIndicator(),
+                  const Center(child: CircularProgressIndicator())
+                else
+                  AppButton.primary(
+                    text: 'Crear cuenta',
+                    onPressed: () {
+                      ref.read(authProvider.notifier).register(
+                            name: _nameController.text,
+                            email: _emailController.text,
+                            password: _passwordController.text,
+                            phone: _phoneController.text,
+                            bloodType: _bloodTypeController.text,
+                            city: _cityController.text,
+                          );
+                    },
                   ),
               ],
             ),

@@ -6,24 +6,53 @@ import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/entities/center_entity.dart';
 import '../../domain/entities/center_detail_entity.dart';
-import '../../domain/entities/user_impact_entity.dart'; // Importamos entidad de impacto
-import '../../domain/entities/achievement_entity.dart'; // Importamos entidad de logros
+import '../../domain/entities/user_impact_entity.dart';
+import '../../domain/entities/achievement_entity.dart';
+import '../../domain/entities/alert_detail_entity.dart';
+import '../../domain/entities/history_item_entity.dart';
+import '../../domain/entities/achievement_detail_entity.dart';
 import '../../domain/repositories/centers_repository.dart';
+import 'package:bloodhero/data/loaders/centers_loader.dart';
 
 // Esta clase es la implementación "real" (pero con datos falsos) de nuestro contrato.
 class FakeCentersRepository implements CentersRepository {
+  static const List<AchievementEntity> _achievements = [
+    AchievementEntity(
+      title: 'Primera Donación',
+      description: '¡Gracias por dar el primer paso!',
+      iconName: 'looks_one',
+    ),
+    AchievementEntity(
+      title: 'Donador Frecuente',
+      description: '3 donaciones en los últimos 6 meses',
+    ),
+    AchievementEntity(
+      title: 'Héroe en Emergencia',
+      description: 'Respondiste a 2 alertas urgentes',
+      iconName: 'local_hospital',
+    ),
+    AchievementEntity(
+      title: 'Constancia de Acero',
+      description: '5 donaciones realizadas',
+      iconName: 'shield',
+    ),
+    AchievementEntity(
+      title: 'Embajador',
+      description: 'Invitaste a 5 amigos a donar',
+      iconName: 'group',
+    ),
+    AchievementEntity(
+      title: 'Donador Leal',
+      description: 'Más de 10 donaciones en total',
+    ),
+  ];
+
   @override
   Future<List<CenterEntity>> getCenters() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      const CenterEntity(
-        'Centro de Salud Norte',
-        '2.5 km',
-        'Av. Siempre Viva 123',
-      ),
-      const CenterEntity('Hospital Central', '4.2 km', 'Calle Principal 456'),
-      const CenterEntity('Banco de Sangre Sur', '5.7 km', 'Boulevard Paz 789'),
-    ];
+    final mapCenters = await loadCentersFromAsset(
+      'assets/data/centers_ba.json',
+    );
+    return mapCenters.map((mc) => CenterEntity.fromMapCenter(mc)).toList();
   }
 
   @override
@@ -103,6 +132,19 @@ class FakeCentersRepository implements CentersRepository {
   }
 
   @override
+  Future<void> bookAppointment({
+    required String centerName,
+    required DateTime date,
+    required String time,
+  }) async {
+    await Future.delayed(const Duration(seconds: 1));
+    debugPrint(
+      'Cita agendada para $centerName el ${date.day}/${date.month} a las $time',
+    );
+    return;
+  }
+
+  @override
   Future<AppointmentEntity> getNextAppointment() async {
     await Future.delayed(const Duration(milliseconds: 800));
     return AppointmentEntity(
@@ -145,19 +187,6 @@ class FakeCentersRepository implements CentersRepository {
   }
 
   @override
-  Future<void> bookAppointment({
-    required String centerName,
-    required DateTime date,
-    required String time,
-  }) async {
-    await Future.delayed(const Duration(seconds: 1));
-    debugPrint(
-      'Cita agendada para $centerName el ${date.day}/${date.month} a las $time',
-    );
-    return;
-  }
-
-  @override
   Future<List<String>> getDonationTips() async {
     await Future.delayed(const Duration(milliseconds: 200));
     return [
@@ -170,42 +199,77 @@ class FakeCentersRepository implements CentersRepository {
   @override
   Future<UserImpactEntity> getUserImpactStats() async {
     await Future.delayed(const Duration(milliseconds: 600));
-    // El ranking podría venir del perfil de usuario. Aca esta fijo usamos valores fijos.
-    return UserImpactEntity(livesHelped: 12, ranking: 'Donador Leal');
+    return const UserImpactEntity(livesHelped: 12, ranking: 'Donador Leal');
   }
 
   @override
   Future<List<AchievementEntity>> getAchievements() async {
     await Future.delayed(const Duration(milliseconds: 900));
+    return _achievements;
+  }
+
+  @override
+  Future<AlertDetailEntity> getAlertDetails(String identifier) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    String bloodTypeNeeded = 'O-';
+    if (identifier.toLowerCase().contains('norte')) {
+      bloodTypeNeeded = 'A+';
+    } else if (identifier.toLowerCase().contains('sur')) {
+      bloodTypeNeeded = 'B-';
+    }
+    return AlertDetailEntity(
+      centerName: identifier,
+      bloodType: bloodTypeNeeded,
+      urgency: 'Dentro de ${bloodTypeNeeded == 'O-' ? 12 : 24} horas',
+      quantityNeeded: '${bloodTypeNeeded == 'O-' ? 5 : 3} donaciones',
+      description:
+          'Se necesita sangre $bloodTypeNeeded para pacientes en $identifier. Tu donación puede hacer la diferencia.',
+      contactPhone: '(011) 4${identifier.length}34-5${identifier.length}78',
+      contactEmail:
+          'donaciones@${identifier.toLowerCase().replaceAll(' ', '')}.com',
+    );
+  }
+
+  @override
+  Future<List<HistoryItemEntity>> getDonationHistory() async {
+    await Future.delayed(const Duration(milliseconds: 500));
     return const [
-      AchievementEntity(
-        title: 'Primera Donación',
-        description: '¡Gracias por dar el primer paso!',
-        iconName: 'looks_one',
+      HistoryItemEntity(
+        date: '12/11/2025',
+        center: 'Hospital Central',
+        type: 'Sangre total',
+        wasCompleted: true,
       ),
-      AchievementEntity(
-        title: 'Donador Frecuente',
-        description: '3 donaciones en los últimos 6 meses',
+      HistoryItemEntity(
+        date: '05/09/2025',
+        center: 'Banco de Sangre Norte',
+        type: 'Plaquetas',
+        wasCompleted: true,
       ),
-      AchievementEntity(
-        title: 'Héroe en Emergencia',
-        description: 'Respondiste a 2 alertas urgentes',
-        iconName: 'local_hospital',
-      ),
-      AchievementEntity(
-        title: 'Constancia de Acero',
-        description: '5 donaciones realizadas',
-        iconName: 'shield',
-      ),
-      AchievementEntity(
-        title: 'Embajador',
-        description: 'Invitaste a 5 amigos a donar',
-        iconName: 'group',
-      ),
-      AchievementEntity(
-        title: 'Donador Leal',
-        description: 'Más de 10 donaciones en total',
+      HistoryItemEntity(
+        date: '18/06/2025',
+        center: 'Clínica San Martín',
+        type: 'Sangre total',
+        wasCompleted: false,
       ),
     ];
+  }
+
+  @override
+  Future<AchievementDetailEntity> getAchievementDetails(String title) async {
+    await Future.delayed(const Duration(milliseconds: 250));
+
+    final achievement = FakeCentersRepository._achievements.firstWhere(
+      (ach) => ach.title == title,
+      orElse: () => const AchievementEntity(
+        title: 'Logro Desconocido',
+        description: 'No se encontraron detalles.',
+      ),
+    );
+
+    return AchievementDetailEntity(
+      title: achievement.title,
+      description: achievement.description,
+    );
   }
 }

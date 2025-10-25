@@ -13,29 +13,25 @@ class ImpactScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Se observan los providers de estadísticas y logros
     final statsAsync = ref.watch(userImpactStatsProvider);
     final achievementsAsync = ref.watch(achievementsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tu impacto')),
       body: ListView(
-        padding: kScreenPadding, // Usamos la constante de padding
+        padding: kScreenPadding,
         children: [
-          // Sección de Resumen de Impacto (usa .when para stats)
           statsAsync.when(
-            loading: () => const _LoadingCard(height: 100), // Widget de carga
-            error: (err, stack) => Text('Error: $err'), // Mensaje de error
-            data: (stats) =>
-                _ImpactSummary(stats: stats), // Pasa los datos al widget
+            loading: () => const _LoadingCard(height: 100),
+            error: (err, stack) => Text('Error: $err'),
+            data: (stats) => _ImpactSummary(stats: stats),
           ),
           const SizedBox(height: kSectionSpacing),
-          // Sección de Logros (usa .when para achievements)
           const Text(
             'Tus logros',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: kItemSpacing), // Usamos constante de espacio
+          const SizedBox(height: kItemSpacing),
           achievementsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, stack) => Text('Error al cargar logros: $err'),
@@ -43,12 +39,9 @@ class ImpactScreen extends ConsumerWidget {
               if (achievements.isEmpty) {
                 return const Text('Aún no has desbloqueado logros.');
               }
-              // Construimos la lista de logros dinámicamente
               return Column(
-                // Usamos Column en lugar de ...spread para evitar errores si está vacío
                 children: achievements.map((achievement) {
                   return Padding(
-                    // Añadimos padding entre cards
                     padding: const EdgeInsets.only(bottom: kCardSpacing),
                     child: Card(
                       shape: RoundedRectangleBorder(
@@ -81,9 +74,6 @@ class ImpactScreen extends ConsumerWidget {
   }
 }
 
-// Widgets Internos
-
-// _ImpactSummary ahora recibe UserImpactEntity
 class _ImpactSummary extends StatelessWidget {
   final UserImpactEntity stats;
 
@@ -96,14 +86,12 @@ class _ImpactSummary extends StatelessWidget {
         borderRadius: BorderRadius.circular(kCardBorderRadius),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(kSectionSpacing), // Usamos constante
+        padding: const EdgeInsets.all(kSectionSpacing),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _ImpactValue(label: 'Vidas', value: stats.livesHelped.toString()),
-            // Calculamos donaciones (podría venir de stats si lo agregamos a UserImpactEntity)
-            _ImpactValue(label: 'Donaciones', value: '8'), // Valor de ejemplo
-            // Usamos achievementsCount en lugar de streak
+            _ImpactValue(label: 'Donaciones', value: '8'),
             _ImpactValue(
               label: 'Logros',
               value: stats.achievementsCount?.toString() ?? '0',
@@ -129,7 +117,7 @@ class _ImpactValue extends StatelessWidget {
           value,
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: kSmallSpacing), // Usamos constante
+        const SizedBox(height: kSmallSpacing),
         Text(label, style: TextStyle(color: Colors.grey[600])),
       ],
     );

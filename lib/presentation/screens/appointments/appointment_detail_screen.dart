@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bloodhero/domain/entities/appointment_detail_entity.dart';
+import '../../../domain/entities/appointment_detail_entity.dart';
 import '../../providers/appointments_provider.dart';
 import 'appointment_booking_date_screen.dart';
 import 'citas_screen.dart';
@@ -20,10 +20,10 @@ class AppointmentDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Detalle de cita')),
-      // .when para manejar los estados de carga, error y datos.
       body: appointmentDetailAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        error: (error, stack) =>
+            Center(child: Text('Error al cargar detalles: $error')),
         data: (appointment) {
           return Padding(
             padding: const EdgeInsets.all(24),
@@ -48,7 +48,16 @@ class AppointmentDetailScreen extends ConsumerWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                ...appointment.reminders.map((reminder) => Text('• $reminder')),
+                // Mostramos los recordatorios dinámicamente
+                if (appointment.reminders.isEmpty)
+                  const Text('No hay recordatorios específicos.')
+                else
+                  ...appointment.reminders.map(
+                    (reminder) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4.0),
+                      child: Text('• $reminder'),
+                    ),
+                  ),
                 const Spacer(),
                 FilledButton(
                   onPressed: () => _handleReschedule(context, appointment),
@@ -59,9 +68,16 @@ class AppointmentDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: () => _handleCancel(context),
+                  onPressed: () => _handleCancel(
+                    context,
+                    ref,
+                  ), // Pasamos ref para posible lógica futura
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                   child: const Text('Cancelar turno'),
                 ),
@@ -72,50 +88,56 @@ class AppointmentDetailScreen extends ConsumerWidget {
       ),
     );
   }
-}
 
-void _handleReschedule(
-  BuildContext context,
-  AppointmentDetailEntity appointment,
-) {
-  context.pushNamed(
-    AppointmentBookingDateScreen.name,
-    extra: appointment.center,
-  );
-}
+  //Funciones auxiliares para acciones:
 
-Future<void> _handleCancel(BuildContext context) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Cancelar turno'),
-      content: const Text(
-        'Si cancelás, vas a liberar el turno reservado. ¿Querés continuar?',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: const Text('Mantener turno'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          child: const Text('Cancelar turno'),
-        ),
-      ],
-    ),
-  );
-
-  if (confirmed == true) {
-    if (!context.mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tu turno fue cancelado.')),
+  void _handleReschedule(
+    BuildContext context,
+    AppointmentDetailEntity appointment,
+  ) {
+    context.pushNamed(
+      AppointmentBookingDateScreen.name,
+      extra: appointment.center,
     );
-    if (!context.mounted) {
-      return;
+    // TODO: Considerar si se debería cancelar la cita actual antes de reprogramar
+  }
+
+  Future<void> _handleCancel(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cancelar turno'),
+        content: const Text(
+          'Si cancelás, vas a liberar el turno reservado. ¿Querés continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Mantener turno'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Confirmar Cancelación'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      // TODO: Aquí iría la lógica para llamar a un método en un provider
+      // que realmente cancele la cita en la base de datos.
+      // Ejemplo: ref.read(appointmentsProvider.notifier).cancelAppointment(appointmentId);
+
+      if (!context.mounted)
+        return; // Buena práctica verificar `mounted` después de `await`
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tu turno fue cancelado (simulado).')),
+      );
+      context.goNamed(CitasScreen.name);
     }
-    context.goNamed(CitasScreen.name);
   }
 }
 
