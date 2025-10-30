@@ -1,7 +1,7 @@
+import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/achievement_entity.dart';
 import '../../domain/entities/user_impact_entity.dart';
-import 'centers_provider.dart'; // Necesitamos el provider del repositorio
 
 // Provider para las estadísticas de impacto (vidas, donaciones)
 final userImpactStatsProvider = FutureProvider.autoDispose<UserImpactEntity>((ref) async {

@@ -1,11 +1,5 @@
+import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/repositories/fake_auth_repository.dart';
-import '../../domain/repositories/auth_repository.dart';
-
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  // Cuando conectemos Firebase, solo cambiar esta línea.
-  return FakeAuthRepository();
-});
 
 // Definición del Estado de Autenticación:
 // Representa los posibles estados de la UI durante el login/registro.

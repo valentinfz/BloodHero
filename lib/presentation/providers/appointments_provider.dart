@@ -1,7 +1,7 @@
+import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/appointment_detail_entity.dart';
 import '../../domain/entities/appointment_entity.dart';
-import 'centers_provider.dart';
 
 final appointmentsProvider =
     FutureProvider.autoDispose<List<AppointmentEntity>>((ref) {

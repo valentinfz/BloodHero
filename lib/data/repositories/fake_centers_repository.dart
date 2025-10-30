@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:bloodhero/data/loaders/centers_loader.dart';
 import 'package:flutter/foundation.dart';
+import '../../domain/entities/alert_detail_entity.dart';
 import '../../domain/entities/alert_entity.dart';
 import '../../domain/entities/appointment_detail_entity.dart';
 import '../../domain/entities/appointment_entity.dart';
@@ -8,14 +10,12 @@ import '../../domain/entities/center_entity.dart';
 import '../../domain/entities/center_detail_entity.dart';
 import '../../domain/entities/user_impact_entity.dart';
 import '../../domain/entities/achievement_entity.dart';
-import '../../domain/entities/alert_detail_entity.dart';
-import '../../domain/entities/history_item_entity.dart';
 import '../../domain/entities/achievement_detail_entity.dart';
+import '../../domain/entities/history_item_entity.dart';
 import '../../domain/repositories/centers_repository.dart';
-import 'package:bloodhero/data/loaders/centers_loader.dart';
 
-// Esta clase es la implementación "real" (pero con datos falsos) de nuestro contrato.
 class FakeCentersRepository implements CentersRepository {
+  // --- Lista Estática de Logros ---
   static const List<AchievementEntity> _achievements = [
     AchievementEntity(
       title: 'Primera Donación',
@@ -57,30 +57,52 @@ class FakeCentersRepository implements CentersRepository {
 
   @override
   Future<CenterDetailEntity> getCenterDetails(String centerName) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (centerName == 'Hospital Central') {
+    await Future.delayed(const Duration(milliseconds: 500)); // Simula carga
+
+    // 1. Carga todos los centros desde el JSON
+    final allMapCenters = await loadCentersFromAsset(
+      'assets/data/centers_ba.json',
+    );
+
+    // --- CORRECCIÓN ---
+    // 2. Busca el centro específico por nombre
+    // Se añade el tipo explícito 'MapCenter?' para permitir que 'orElse' devuelva null.
+    MapCenter? foundCenter = allMapCenters.cast<MapCenter?>().firstWhere(
+      (mc) => mc?.name == centerName,
+      orElse: () => null as MapCenter?,
+    );
+    // --- FIN CORRECCIÓN ---
+
+    // 3. Si se encontró el centro en el JSON, usa sus datos
+    if (foundCenter != null) {
+      // Usamos los datos reales del JSON, pero mantenemos horarios/servicios hardcodeados por ahora
       return CenterDetailEntity(
-        name: 'Hospital Central',
-        address: 'Calle Principal 456, CABA',
-        schedule: 'Lun a Vie 8:00 - 20:00',
+        name: foundCenter.name,
+        address: foundCenter.address,
+        schedule:
+            'Lun a Vie 8:00 - 18:00 · Sáb 9:00 - 13:00', // Horario genérico
         services: [
-          'Extracción de sangre y plasma',
-          'Estacionamiento sin cargo',
-          'Cafetería',
+          // Servicios genéricos
+          'Extracción de sangre',
+          foundCenter.name.contains('Hospital')
+              ? 'Estacionamiento'
+              : 'Zona de espera',
         ],
-        imageUrl: '',
-        latitude: -34.6037,
-        longitude: -58.3816,
+        imageUrl: foundCenter.image ?? '', // Usa la imagen del JSON si existe
+        latitude: foundCenter.lat,
+        longitude: foundCenter.lng,
       );
     }
+
+    // 4. Si NO se encontró, devuelve datos por defecto (o lanza un error)
     return CenterDetailEntity(
-      name: centerName,
-      address: 'Av. Siempre Viva 123, CABA',
-      schedule: 'Lun a Vie 8:00 - 18:00',
-      services: ['Extracción de sangre y plasma'],
+      name: centerName, // Muestra el nombre que se buscó
+      address: 'Dirección no encontrada',
+      schedule: 'Horario no disponible',
+      services: ['Servicios no disponibles'],
       imageUrl: '',
-      latitude: -34.6090,
-      longitude: -58.3845,
+      latitude: -34.6, // Coordenadas genéricas de BA
+      longitude: -58.4,
     );
   }
 
@@ -177,8 +199,8 @@ class FakeCentersRepository implements CentersRepository {
   Future<UserEntity> getUserProfile() async {
     await Future.delayed(const Duration(milliseconds: 400));
     return UserEntity(
-      name: 'Sebastián',
-      email: 'sebastian@email.com',
+      name: 'Usuario',
+      email: 'usuario@email.com',
       phone: '1122334455',
       city: 'Buenos Aires',
       bloodType: 'O-',
@@ -258,7 +280,6 @@ class FakeCentersRepository implements CentersRepository {
   @override
   Future<AchievementDetailEntity> getAchievementDetails(String title) async {
     await Future.delayed(const Duration(milliseconds: 250));
-
     final achievement = FakeCentersRepository._achievements.firstWhere(
       (ach) => ach.title == title,
       orElse: () => const AchievementEntity(
@@ -266,7 +287,6 @@ class FakeCentersRepository implements CentersRepository {
         description: 'No se encontraron detalles.',
       ),
     );
-
     return AchievementDetailEntity(
       title: achievement.title,
       description: achievement.description,

@@ -1,13 +1,7 @@
+import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/repositories/fake_centers_repository.dart';
-import '../../domain/repositories/centers_repository.dart';
 import '../../domain/entities/center_entity.dart';
 import '../../domain/entities/center_detail_entity.dart';
-
-// Este es el provider "intercambiable". Cuando conectemos Firebase, solo cambiaremos esta clase.
-final centersRepositoryProvider = Provider<CentersRepository>((ref) {
-  return FakeCentersRepository();
-});
 
 // Provider para la lista de todos los centros:
 // Llama al método getCenters() del repositorio actual.

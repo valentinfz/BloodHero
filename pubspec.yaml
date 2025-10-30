@@ -32,6 +32,11 @@ dependencies:
   # Compartir logros y contenido
   share_plus: ^12.0.1
 
+  # Dependencias de Firebase:
+  firebase_core: ^3.1.1   # Necesario para inicializar Firebase
+  firebase_auth: ^5.1.1   # Para la autenticación (login, registro)
+  cloud_firestore: ^5.1.0 # Para la base de datos Firestore
+
   cupertino_icons: ^1.0.2
 
 dev_dependencies:

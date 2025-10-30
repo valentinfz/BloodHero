@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+// Importamos TODAS las pantallas
 import 'package:bloodhero/presentation/screens/splash/splash_screen.dart';
 import 'package:bloodhero/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:bloodhero/presentation/screens/auth/login_screen.dart';
@@ -27,7 +28,9 @@ import 'package:bloodhero/presentation/screens/profile/security_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/help_center_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/checkin_qr_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/privacy_policy_screen.dart';
+// Importamos las entidades/modelos necesarios para los 'extra'
 import 'package:bloodhero/data/loaders/centers_loader.dart';
+import 'package:bloodhero/domain/entities/center_entity.dart'; // Import CenterEntity
 
 // GoRouter configuration
 final appRouter = GoRouter(
@@ -79,18 +82,42 @@ final appRouter = GoRouter(
       name: CenterDetailScreen.name,
       builder: (context, state) {
         final extra = state.extra;
-        String? nameToPass; // Variable para guardar el nombre
+        String? nameToPass;
+        MapCenter?
+        centerObjectToPass; // Variable para pasar el objeto si viene del mapa
 
-        if (extra is MapCenter) {
-          // Si recibimos MapCenter, extraemos el nombre
+        if (extra is CenterEntity) {
+          // --- NUEVA CONDICIÓN ---
+          // Si recibimos CenterEntity (desde centers_screen), extraemos el nombre
+          // Y creamos un MapCenter temporal si la pantalla de detalle aún lo necesita
+          // (idealmente CenterDetailScreen solo usaría el nombre para el provider)
           nameToPass = extra.name;
+          centerObjectToPass = MapCenter(
+            id: '',
+            name: extra.name,
+            address: extra.address,
+            lat: extra.lat,
+            lng: extra.lng,
+            image: extra.image,
+          );
+        } else if (extra is MapCenter) {
+          // Si recibimos MapCenter (quizás de una versión anterior o test), extraemos nombre y pasamos el objeto
+          nameToPass = extra.name;
+          centerObjectToPass = extra;
         } else if (extra is String?) {
           // Si recibimos String (o null), lo usamos directamente
           nameToPass = extra;
         }
-        return CenterDetailScreen(centerName: nameToPass);
+
+        // Llamamos al constructor pasando ambos parámetros (centerName para el provider, center por compatibilidad)
+        return CenterDetailScreen(
+          centerName: nameToPass,
+          center: centerObjectToPass,
+        );
+        // -----------------------
       },
     ),
+    // Ruta '/center-reviews' comentada o eliminada
     GoRoute(
       path: '/appointments/book/center',
       name: AppointmentBookingCenterScreen.name,
@@ -125,7 +152,11 @@ final appRouter = GoRouter(
         final center = data?['center'] as String? ?? 'Hospital Central';
         final date = data?['date'] as DateTime? ?? DateTime.now();
         final time = data?['time'] as String? ?? '09:00';
-        return AppointmentBookingConfirmScreen(centerName: center, date: date, time: time);
+        return AppointmentBookingConfirmScreen(
+          centerName: center,
+          date: date,
+          time: time,
+        );
       },
     ),
     GoRoute(
@@ -136,7 +167,11 @@ final appRouter = GoRouter(
         final center = data?['center'] ?? 'Hospital Central';
         final date = data?['date'] ?? '12/11/2025';
         final time = data?['time'] ?? '10:30';
-        return AppointmentConfirmationScreen(center: center, date: date, time: time);
+        return AppointmentConfirmationScreen(
+          center: center,
+          date: date,
+          time: time,
+        );
       },
     ),
     GoRoute(

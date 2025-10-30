@@ -1,10 +1,10 @@
+import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/alert_entity.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/entities/user_impact_entity.dart';
-import 'centers_provider.dart';
 
 // Provider para obtener el perfil del usuario
 final userProfileProvider = FutureProvider.autoDispose<UserEntity>((ref) {
