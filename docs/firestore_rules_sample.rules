@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, update, delete: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId
+        && request.resource.data.keys().hasAll([
+          'name', 'email', 'phone', 'bloodType', 'city', 'ranking', 'createdAt'
+        ]);
+
+      match /appointments/{appointmentId} {
+        allow read, update, delete: if request.auth.uid == userId;
+        allow create: if request.auth.uid == userId
+          && request.resource.data.keys().hasAll([
+            'centerId', 'centerName', 'scheduledAt', 'status',
+            'donationType', 'requiresVerificationCode'
+          ]);
+      }
+
+      match /achievements/{achievementId} {
+        allow read: if request.auth.uid == userId;
+        allow write: if request.auth.uid == userId;
+      }
+    }
+
+    match /alerts/{alertId} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.resource.data.keys().hasAll([
+          'centerId', 'bloodType', 'expiresAt', 'quantityNeeded'
+        ]);
+    }
+
+    match /achievementCatalog/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /centers/{centerId} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.resource.data.keys().hasAll([
+          'name', 'address', 'latitude', 'longitude'
+        ]);
+    }
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "centers": [
+    {
+      "id": "clinicas",
+      "name": "Hospital de Clínicas (UBA)",
+      "address": "Av. Córdoba 2351, CABA",
+      "latitude": -34.5999,
+      "longitude": -58.3974,
+      "imageUrl": "https://example.org/clinicas.jpg",
+      "schedule": "Lun a Vie 8-18 hs · Sáb 9-13 hs",
+      "services": [
+        "Extracción de sangre",
+        "Plaquetaféresis",
+        "Consultorio de orientación"
+      ],
+      "contact": {
+        "phone": "+54 11 5950-8000",
+        "email": "donaciones@clinicas.org"
+      }
+    },
+    {
+      "id": "argerich",
+      "name": "Hospital Argerich",
+      "address": "Pi y Margall 750, CABA",
+      "latitude": -34.6171,
+      "longitude": -58.3606,
+      "imageUrl": "https://example.org/argerich.jpg",
+      "schedule": "Lun a Vie 7-17 hs",
+      "services": [
+        "Extracción de sangre",
+        "Banco de sangre",
+        "Atención a donantes recurrentes"
+      ],
+      "contact": {
+        "phone": "+54 11 4121-0700",
+        "email": "donaciones@argerich.org"
+      }
+    },
+    {
+      "id": "durand",
+      "name": "Hospital Durand",
+      "address": "Av. Díaz Vélez 5044, CABA",
+      "latitude": -34.5988,
+      "longitude": -58.4336,
+      "imageUrl": "https://example.org/durand.jpg",
+      "schedule": "Lun a Vie 8-16 hs",
+      "services": [
+        "Extracción de sangre",
+        "Plasma",
+        "Consultorio médico"
+      ],
+      "contact": {
+        "phone": "+54 11 4981-5555",
+        "email": "donantes@durand.org"
+      }
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alert-argerich-o-1",
+      "centerId": "argerich",
+      "bloodType": "O-",
+      "expiresAt": "2025-11-07T12:00:00Z",
+      "quantityNeeded": 6,
+      "description": "Pacientes en terapia intensiva necesitan donaciones urgentes.",
+      "urgencyHours": 24,
+      "contactPhone": "+54 11 4121-0700",
+      "contactEmail": "donaciones@argerich.org"
+    },
+    {
+      "id": "alert-durand-b-1",
+      "centerId": "durand",
+      "bloodType": "B-",
+      "expiresAt": "2025-11-08T18:00:00Z",
+      "quantityNeeded": 4,
+      "description": "Solicitamos donantes para reposición de cirugías programadas.",
+      "urgencyHours": 36,
+      "contactPhone": "+54 11 4981-5555",
+      "contactEmail": "donantes@durand.org"
+    }
+  ],
+  "achievementCatalog": [
+    {
+      "id": "first-donation",
+      "title": "Primera donación",
+      "description": "Registrá tu primera donación para comenzar a sumar impacto.",
+      "iconName": "looks_one"
+    },
+    {
+      "id": "frequent-hero",
+      "title": "Donante frecuente",
+      "description": "Completá tres donaciones para desbloquear este logro.",
+      "iconName": "volunteer_activism"
+    },
+    {
+      "id": "alert-supporter",
+      "title": "Héroe en emergencia",
+      "description": "Respondé a dos alertas urgentes para ayudar a hospitales.",
+      "iconName": "local_hospital"
+    }
+  ]
+}
