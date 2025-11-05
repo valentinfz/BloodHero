@@ -86,7 +86,7 @@ class FirebaseCentersRepository implements CentersRepository {
         schedule: data['schedule'] ?? 'Horario no disponible',
         // Firestore guarda arrays directamente
         services: List<String>.from(data['services'] ?? []),
-        imageUrl: data['imageUrl'] ?? '',
+        image: data['imageUrl'] ?? '',
         // Asumimos que lat/lng también están en los detalles
         latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
         longitude: (data['longitude'] as num?)?.toDouble() ?? 0.0,

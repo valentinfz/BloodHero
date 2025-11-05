@@ -88,7 +88,7 @@ class FakeCentersRepository implements CentersRepository {
               ? 'Estacionamiento'
               : 'Zona de espera',
         ],
-        imageUrl: foundCenter.image ?? '', // Usa la imagen del JSON si existe
+        image: foundCenter.image ?? '', // Usa la imagen del JSON si existe
         latitude: foundCenter.lat,
         longitude: foundCenter.lng,
       );
@@ -100,7 +100,7 @@ class FakeCentersRepository implements CentersRepository {
       address: 'Dirección no encontrada',
       schedule: 'Horario no disponible',
       services: ['Servicios no disponibles'],
-      imageUrl: '',
+      image: '',
       latitude: -34.6, // Coordenadas genéricas de BA
       longitude: -58.4,
     );

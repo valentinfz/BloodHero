@@ -17,8 +17,8 @@ class CenterDetailScreen extends ConsumerWidget {
 
   Widget _centerImage(BuildContext context, CenterDetailEntity centerData) {
     const placeholder = 'assets/images/centers/placeholder.jpg';
-    final src = centerData.imageUrl.isNotEmpty
-        ? centerData.imageUrl
+    final src = centerData.image.isNotEmpty
+        ? centerData.image
         : (center?.image ?? placeholder);
 
     final isNetwork = src.startsWith('http');

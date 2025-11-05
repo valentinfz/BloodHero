@@ -13,17 +13,24 @@ class AuthNotifier extends Notifier<AuthState> {
     return AuthState.initial;
   }
 
+  // Helper privado para ejecutar operaciones, manejar el estado y los errores
+  Future<bool> _runAuthOperation(Future<void> Function() operation) async {
+    state = AuthState.loading;
+    try {
+      await operation();
+      state = AuthState.success;
+      return true;
+    } catch (e) {
+      state = AuthState.error;
+      return false;
+    }
+  }
+
   // Método para manejar el login
   Future<void> login(String email, String password) async {
-    state = AuthState.loading; // Pone la UI en estado de carga
-    try {
-      final authRepository = ref.read(authRepositoryProvider);
-      await authRepository.login(email, password);
-      state =
-          AuthState.success; // Si todo va bien, pone la UI en estado de éxito
-    } catch (e) {
-      state = AuthState.error; // Si hay un error, lo notifica a la UI
-    }
+    await _runAuthOperation(() {
+      return ref.read(authRepositoryProvider).login(email, password);
+    });
   }
 
   // Método para manejar el registro
@@ -35,33 +42,30 @@ class AuthNotifier extends Notifier<AuthState> {
     required String bloodType,
     required String city,
   }) async {
-    state = AuthState.loading;
-    try {
-      final authRepository = ref.read(authRepositoryProvider);
-      await authRepository.register(
-        name: name,
-        email: email,
-        password: password,
-        phone: phone,
-        bloodType: bloodType,
-        city: city,
-      );
-      state = AuthState.success;
-    } catch (e) {
-      state = AuthState.error;
-    }
+    await _runAuthOperation(() {
+      return ref
+          .read(authRepositoryProvider)
+          .register(
+            name: name,
+            email: email,
+            password: password,
+            phone: phone,
+            bloodType: bloodType,
+            city: city,
+          );
+    });
   }
 
   // Método para manejar la recuperación de contraseña
   Future<void> forgotPassword(String email) async {
-    state = AuthState.loading;
-    try {
-      final authRepository = ref.read(authRepositoryProvider);
-      await authRepository.forgotPassword(email);
-      state = AuthState.success;
-    } catch (e) {
-      state = AuthState.error;
-    }
+    await _runAuthOperation(() {
+      return ref.read(authRepositoryProvider).forgotPassword(email);
+    });
+  }
+
+  // Método para cerrar sesión (ejemplo de cómo se agregaría)
+  Future<void> logout() async {
+    await ref.read(authRepositoryProvider).logout();
   }
 
   // Método para resetear el estado (útil para salir de un estado de error)
@@ -70,7 +74,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 }
 
-// 4. El Provider principal que la UI consumirá
+// El Provider principal que la UI consumirá
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
   return AuthNotifier();
 });

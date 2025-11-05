@@ -38,4 +38,10 @@ class FakeAuthRepository implements AuthRepository {
     // Para la simulación, asumimos que siempre funciona.
     return;
   }
+
+  @override
+  Future<void> logout() {
+    // TODO: implement logout
+    throw UnimplementedError();
+  }
 }
