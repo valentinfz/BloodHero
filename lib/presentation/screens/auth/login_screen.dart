@@ -34,14 +34,14 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authProvider);
 
     ref.listen(authProvider, (previous, next) {
-      if (next == AuthState.success) {
-        // Al iniciar sesión, vamos directamente a la pantalla Home ahora (posible cambio)
+      if (next is AuthSuccess) {
         context.goNamed(HomeScreen.name);
       }
-      if (next == AuthState.error) {
+      if (next is AuthError) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error: Credenciales incorrectas (demo).'),
+          SnackBar(
+            content: Text('Error: ${next.message}'),
+            backgroundColor: Colors.red,
           ),
         );
         ref.read(authProvider.notifier).resetState();
@@ -79,25 +79,24 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: kSmallSpacing),
-                AppButton.primary(
-                  text: 'Ingresar',
-                  onPressed: authState == AuthState.loading
-                      ? null
-                      : () {
-                          ref
-                              .read(authProvider.notifier)
-                              .login(
-                                _emailController.text,
-                                _passwordController.text,
-                              );
-                        },
-                ),
-                if (authState == AuthState.loading)
+                if (authState is AuthLoading)
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(16.0),
                       child: CircularProgressIndicator(),
                     ),
+                  )
+                else
+                  AppButton.primary(
+                    text: 'Ingresar',
+                    onPressed: () {
+                      ref
+                          .read(authProvider.notifier)
+                          .login(
+                            _emailController.text,
+                            _passwordController.text,
+                          );
+                    },
                   ),
                 const SizedBox(height: kCardSpacing),
                 Row(

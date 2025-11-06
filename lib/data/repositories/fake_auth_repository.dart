@@ -41,7 +41,16 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() {
-    // TODO: implement logout
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deleteUserAccount() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> updateUserProfile(Map<String, dynamic> data) {
     throw UnimplementedError();
   }
 }

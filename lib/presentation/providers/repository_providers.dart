@@ -7,8 +7,8 @@ import 'package:bloodhero/domain/repositories/centers_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return FakeAuthRepository(); //Fake
-  // return FirebaseAuthRepository(); //FireBase
+  // return FakeAuthRepository(); //Fake
+  return FirebaseAuthRepository(); //FireBase
 });
 
 final centersRepositoryProvider = Provider<CentersRepository>((ref) {

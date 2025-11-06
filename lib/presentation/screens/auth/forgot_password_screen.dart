@@ -17,6 +17,7 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 
 class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -31,18 +32,26 @@ class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     // Escuchamos los cambios de estado para acciones únicas
     ref.listen(authProvider, (previous, next) {
-      if (next == AuthState.success) {
+      if (previous is AuthLoading && next is AuthInitial) {
+        if (!context.mounted) return; // Verificación de seguridad
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Email de recuperación enviado (demo).'),
+            content: Text('Email de recuperación enviado.'),
+            backgroundColor: Colors.green,
           ),
         );
-        // Reseteamos el estado para futuras operaciones
-        ref.read(authProvider.notifier).resetState();
+        // Regresamos a la pantalla de Login
+        context.goNamed(LoginScreen.name);
       }
-      if (next == AuthState.error) {
+
+      // Error: Detectamos el estado de error y mostramos el mensaje
+      if (next is AuthError) {
+        if (!context.mounted) return; // Verificación de seguridad
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al enviar el email (demo).')),
+          SnackBar(
+            content: Text('Error: ${next.message}'),
+            backgroundColor: Colors.red,
+          ),
         );
         ref.read(authProvider.notifier).resetState();
       }
@@ -53,46 +62,59 @@ class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       body: SafeArea(
         child: Padding(
           padding: kScreenPadding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Ingresá tu email y te enviaremos instrucciones para restablecerla.',
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: kSectionSpacing),
-              CustomTextFormField(
-                labelText: 'Email',
-                keyboardType: TextInputType.emailAddress,
-                controller: _emailController, // Conectamos el controller
-              ),
-              const SizedBox(height: kSectionSpacing),
-              // El botón se deshabilita mientras está en estado de carga
-              AppButton.primary(
-                text: 'Enviar instrucciones',
-                onPressed: authState == AuthState.loading
-                    ? null
-                    : () {
-                        // Llamamos al método del provider
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Ingresá tu email y te enviaremos instrucciones para restablecerla.',
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: kSectionSpacing),
+                CustomTextFormField(
+                  labelText: 'Email',
+                  keyboardType: TextInputType.emailAddress,
+                  controller: _emailController, // Conectamos el controller
+                  validator: (value) {
+                    // Validador de email
+                    if (value == null ||
+                        value.isEmpty ||
+                        !value.contains('@')) {
+                      return 'Ingresa un email válido';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: kSectionSpacing),
+
+                if (authState is AuthLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else
+                  AppButton.primary(
+                    text: 'Enviar instrucciones',
+                    onPressed: () {
+                      if (_formKey.currentState?.validate() ?? false) {
                         ref
                             .read(authProvider.notifier)
                             .forgotPassword(_emailController.text);
-                      },
-              ),
-              // Mostramos un spinner si el estado es 'loading'
-              if (authState == AuthState.loading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: CircularProgressIndicator(),
+                      }
+                    },
                   ),
+
+                const Spacer(),
+
+                AppButton.text(
+                  text: 'Volver al inicio de sesión',
+                  onPressed: () => context.goNamed(LoginScreen.name),
                 ),
-              const Spacer(),
-              AppButton.text(
-                text: 'Volver al inicio de sesión',
-                onPressed: () => context.goNamed(LoginScreen.name),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

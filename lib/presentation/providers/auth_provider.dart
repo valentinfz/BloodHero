@@ -1,39 +1,75 @@
 import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Definición del Estado de Autenticación:
-// Representa los posibles estados de la UI durante el login/registro.
-enum AuthState { initial, loading, success, error }
+abstract class AuthState {
+  const AuthState();
+}
+
+class AuthInitial extends AuthState {
+  const AuthInitial();
+}
+
+class AuthLoading extends AuthState {
+  const AuthLoading();
+}
+
+class AuthSuccess extends AuthState {
+  const AuthSuccess();
+}
+
+class AuthError extends AuthState {
+  final String message;
+  const AuthError(this.message);
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is AuthError && other.message == message;
+  }
+
+  @override
+  int get hashCode => message.hashCode;
+}
 
 // El Notifier:
-// Gestiona la lógica y el estado del formulario de autenticación.
 class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
-    return AuthState.initial;
+    return const AuthInitial();
   }
 
-  // Helper privado para ejecutar operaciones, manejar el estado y los errores
-  Future<bool> _runAuthOperation(Future<void> Function() operation) async {
-    state = AuthState.loading;
+  // Helper para operaciones que SÍ inician sesión (login, register)
+  Future<bool> _runLoginOperation(Future<void> Function() operation) async {
+    state = const AuthLoading();
     try {
       await operation();
-      state = AuthState.success;
+      state = const AuthSuccess();
       return true;
     } catch (e) {
-      state = AuthState.error;
+      state = AuthError(e.toString().replaceFirst("Exception: ", ""));
       return false;
     }
   }
 
-  // Método para manejar el login
+  // Helper para operaciones que NO inician sesión (forgot password, update, delete)
+  Future<bool> _runSideOperation(Future<void> Function() operation) async {
+    state = const AuthLoading();
+    try {
+      await operation();
+      state = const AuthInitial();
+      return true;
+    } catch (e) {
+      state = AuthError(e.toString().replaceFirst("Exception: ", ""));
+      return false;
+    }
+  }
+
   Future<void> login(String email, String password) async {
-    await _runAuthOperation(() {
+    await _runLoginOperation(() {
       return ref.read(authRepositoryProvider).login(email, password);
     });
   }
 
-  // Método para manejar el registro
   Future<void> register({
     required String name,
     required String email,
@@ -42,7 +78,7 @@ class AuthNotifier extends Notifier<AuthState> {
     required String bloodType,
     required String city,
   }) async {
-    await _runAuthOperation(() {
+    await _runLoginOperation(() {
       return ref
           .read(authRepositoryProvider)
           .register(
@@ -56,21 +92,38 @@ class AuthNotifier extends Notifier<AuthState> {
     });
   }
 
-  // Método para manejar la recuperación de contraseña
   Future<void> forgotPassword(String email) async {
-    await _runAuthOperation(() {
+    await _runSideOperation(() {
       return ref.read(authRepositoryProvider).forgotPassword(email);
     });
   }
 
-  // Método para cerrar sesión (ejemplo de cómo se agregaría)
   Future<void> logout() async {
     await ref.read(authRepositoryProvider).logout();
+    // NOTA: Podrías querer que el logout también cambie el estado
+    // state = const AuthInitial();
   }
 
-  // Método para resetear el estado (útil para salir de un estado de error)
+  /// Actualiza el perfil de usuario (ej. desde EditProfileScreen)
+  /// Usa _runSideOperation para mostrar feedback (loading/error) sin desloguear.
+  Future<void> updateUserProfile(Map<String, dynamic> data) async {
+    await _runSideOperation(() {
+      return ref.read(authRepositoryProvider).updateUserProfile(data);
+    });
+  }
+
+  /// Borra la cuenta del usuario (ej. desde SecurityScreen)
+  /// Usa _runSideOperation para mostrar feedback y luego desloguear.
+  Future<void> deleteUserAccount() async {
+    await _runSideOperation(() {
+      return ref.read(authRepositoryProvider).deleteUserAccount();
+    });
+    // Adicionalmente, reseteamos el estado a Initial por si acaso.
+    state = const AuthInitial();
+  }
+
   void resetState() {
-    state = AuthState.initial;
+    state = const AuthInitial();
   }
 }
 

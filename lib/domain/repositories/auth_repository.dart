@@ -1,5 +1,4 @@
 abstract class AuthRepository {
-  
   Future<void> login(String email, String password);
 
   Future<void> register({
@@ -14,4 +13,8 @@ abstract class AuthRepository {
   Future<void> forgotPassword(String email);
 
   Future<void> logout();
+
+  Future<void> updateUserProfile(Map<String, dynamic> data);
+  
+  Future<void> deleteUserAccount();
 }

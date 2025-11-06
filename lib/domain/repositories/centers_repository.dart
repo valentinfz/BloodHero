@@ -35,8 +35,7 @@ abstract class CentersRepository {
   // Métodos para el Impacto y logros del usuario
   Future<UserImpactEntity> getUserImpactStats();
   Future<List<AchievementEntity>> getAchievements();
-  Future<AchievementDetailEntity> getAchievementDetails(String title); // Añadido para detalles de logros
-  // --------------------
+  Future<AchievementDetailEntity> getAchievementDetails(String title);
 
   // Métodos para Alertas (Detalle)
   Future<AlertDetailEntity> getAlertDetails(String identifier);
