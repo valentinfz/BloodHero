@@ -38,13 +38,19 @@ class PrivacyPolicyScreen extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(section.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                section.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
               const SizedBox(height: 8),
               Text(section.body),
             ],
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(height: 20),
+  separatorBuilder: (context, index) => const SizedBox(height: 20),
         itemCount: sections.length,
       ),
     );

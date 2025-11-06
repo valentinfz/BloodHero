@@ -1,51 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/history_provider.dart';
+import 'package:bloodhero/config/theme/layout_constants.dart';
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends ConsumerWidget {
   static const String name = 'history_screen';
   const HistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final history = const [
-      _HistoryItem('12/11/2025', 'Hospital Central', 'Sangre total', true),
-      _HistoryItem('05/09/2025', 'Banco de Sangre Norte', 'Plaquetas', true),
-      _HistoryItem('18/06/2025', 'Clínica San Martín', 'Sangre total', false),
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final historyAsync = ref.watch(donationHistoryProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Historial de donaciones')),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(24),
-        itemBuilder: (context, index) {
-          final item = history[index];
-          return Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: item.wasCompleted ? Colors.green.shade100 : Colors.red.shade100,
-                child: Icon(
-                  item.wasCompleted ? Icons.check : Icons.cancel,
-                  color: item.wasCompleted ? Colors.green : Colors.red,
+      body: historyAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) =>
+            Center(child: Text('Error al cargar historial: $error')),
+        data: (history) {
+          if (history.isEmpty) {
+            return const Center(
+              child: Text('Aún no tienes donaciones registradas.'),
+            );
+          }
+          return ListView.separated(
+            padding: kScreenPadding,
+            itemBuilder: (context, index) {
+              final item = history[index];
+              return Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(kCardBorderRadius),
                 ),
-              ),
-              title: Text('${item.date} · ${item.type}'),
-              subtitle: Text(item.center),
-              trailing: Text(item.wasCompleted ? 'Completada' : 'Cancelada'),
-            ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: item.wasCompleted
+                        ? Colors.green.shade100
+                        : Colors.red.shade100,
+                    child: Icon(
+                      item.wasCompleted
+                          ? Icons.check_circle_outline
+                          : Icons.cancel_outlined,
+                      color: item.wasCompleted
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
+                    ),
+                  ),
+                  title: Text('${item.dateLabel} · ${item.donationType}'),
+                  subtitle: Text(item.centerName),
+                  trailing: Text(
+                    item.wasCompleted ? 'Realizada' : 'Cancelada',
+                    style: TextStyle(
+                      color: item.wasCompleted
+                          ? Colors.green.shade800
+                          : Colors.red.shade800,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              );
+            },
+      separatorBuilder: (context, _) =>
+        const SizedBox(height: kCardSpacing),
+            itemCount: history.length,
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemCount: history.length,
       ),
     );
   }
-}
-
-class _HistoryItem {
-  final String date;
-  final String center;
-  final String type;
-  final bool wasCompleted;
-
-  const _HistoryItem(this.date, this.center, this.type, this.wasCompleted);
 }

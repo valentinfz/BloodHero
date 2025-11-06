@@ -19,28 +19,20 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final titleWidget = Text(
       title,
-      style: Theme.of(context)
-          .textTheme
-          .headlineSmall
-          ?.copyWith(fontWeight: FontWeight.bold),
+      style: Theme.of(
+        context,
+      ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
     );
 
     final subtitleWidget = subtitle == null
         ? null
-        : Text(
-            subtitle!,
-            style: Theme.of(context).textTheme.bodyMedium,
-          );
+        : Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium);
 
     return Column(
       crossAxisAlignment: align,
       children: [
         if (icon != null)
-          Icon(
-            icon,
-            size: 48,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          Icon(icon, size: 48, color: Theme.of(context).colorScheme.primary),
         if (icon != null) const SizedBox(height: kSmallSpacing),
         titleWidget,
         if (subtitleWidget != null) ...[

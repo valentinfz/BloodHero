@@ -1,89 +1,51 @@
+import 'package:bloodhero/presentation/providers/appointments_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'package:bloodhero/presentation/widgets/custom_bottom_nav_bar.dart';
 import 'package:bloodhero/presentation/widgets/shared/info_card.dart';
-import 'appointment_booking_center_screen.dart';
 import 'appointment_detail_screen.dart';
 
-class CitasScreen extends StatelessWidget {
+class CitasScreen extends ConsumerWidget {
   static const String name = 'citas_screen';
   const CitasScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final appointments = const [
-      _AppointmentCardData(
-        id: '1',
-        center: 'Hospital Central',
-        date: '12/11/2025',
-        time: '10:30',
-        status: 'Confirmada',
-      ),
-      _AppointmentCardData(
-        id: '2',
-        center: 'Banco de Sangre Norte',
-        date: '05/12/2025',
-        time: '09:00',
-        status: 'Pendiente',
-      ),
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appointmentsAsync = ref.watch(appointmentsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mis Citas')),
-      body: ListView.separated(
-        padding: kScreenPadding,
-        itemBuilder: (context, index) {
-          final appointment = appointments[index];
-          final statusColor = appointment.status == 'Confirmada'
-              ? Colors.green
-              : Theme.of(context).colorScheme.error;
-          return InfoCard(
-            title: '${appointment.date} · ${appointment.time}',
-            body: [Text(appointment.center)],
-            trailing: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  appointment.status,
-                  style: TextStyle(color: statusColor),
+      // .when para manejar los diferentes estados: carga, error y datos listos.
+      body: appointmentsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Error: $error')),
+        data: (appointments) {
+          if (appointments.isEmpty) {
+            return const Center(child: Text('Aún no tienes citas agendadas.'));
+          }
+          // Si tenemos datos, construimos la lista como antes, pero usando los datos del provider.
+          return ListView.separated(
+            padding: kScreenPadding,
+            itemBuilder: (context, index) {
+              final appointment = appointments[index];
+              return InfoCard(
+                title: '${appointment.dateLabel} · ${appointment.timeLabel}',
+                body: [Text(appointment.location)],
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.pushNamed(
+                  AppointmentDetailScreen.name,
+                  extra: appointment.id,
                 ),
-                const SizedBox(height: kSmallSpacing / 2),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
-            onTap: () => context.pushNamed(
-              AppointmentDetailScreen.name,
-              extra: appointment.id,
-            ),
+              );
+            },
+            separatorBuilder: (context, index) => const SizedBox(height: kCardSpacing),
+            itemCount: appointments.length,
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
-        itemCount: appointments.length,
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.pushNamed(AppointmentBookingCenterScreen.name),
-        icon: const Icon(Icons.add),
-        label: const Text('Agendar cita'),
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
     );
   }
-}
-
-class _AppointmentCardData {
-  final String id;
-  final String center;
-  final String date;
-  final String time;
-  final String status;
-
-  const _AppointmentCardData({
-    required this.id,
-    required this.center,
-    required this.date,
-    required this.time,
-    required this.status,
-  });
 }

@@ -1,49 +1,26 @@
+import 'package:bloodhero/domain/entities/alert_entity.dart';
+import 'package:bloodhero/presentation/providers/home_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 import '../../widgets/shared/app_button.dart';
+import '../appointments/citas_screen.dart';
+import '../centers/centers_screen.dart';
 
-// Modelos de datos hardcodeados (para la UI)
-class Alert {
-  final String bloodType;
-  final String distance;
-  final String expiration;
-  Alert(this.bloodType, this.distance, this.expiration);
-}
-
-class Appointment {
-  final String date;
-  final String time;
-  final String location;
-  Appointment(this.date, this.time, this.location);
-}
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   static const String name = 'home_screen';
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // --- Datos de ejemplo ---
-    final nextAppointment = Appointment(
-      'Lun 12/11',
-      '10:30',
-      'Hospital Central',
-    );
-    final nearbyAlerts = [
-      Alert('O-', '2 km', 'vence hoy'),
-      Alert('A+', '5 km', 'vence en 2 días'),
-      Alert('B-', '8 km', 'vence en 3 días'),
-    ];
-    const userName = 'Usuario';
-    // ----------------------
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         toolbarHeight: 80,
         backgroundColor: Colors.grey[100],
         elevation: 0,
-        title: const _Header(userName: userName),
+        title: const _Header(),
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
@@ -51,13 +28,13 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _NextAppointmentCard(appointment: nextAppointment),
-              const SizedBox(height: 24),
-              _NearbyAlertsSection(alerts: nearbyAlerts),
-              const SizedBox(height: 24),
-              const _ImpactSection(),
-              const SizedBox(height: 96), // Espacio para el botón flotante
+            children: const [
+              _NextAppointmentCard(),
+              SizedBox(height: 24),
+              _NearbyAlertsSection(),
+              SizedBox(height: 24),
+              _DonationTipSection(),
+              SizedBox(height: 96),
             ],
           ),
         ),
@@ -68,7 +45,7 @@ class HomeScreen extends StatelessWidget {
         child: AppButton.primary(
           text: 'Agendar donación',
           onPressed: () {
-            // Acción del botón
+            context.goNamed(CenterScreen.name);
           },
         ),
       ),
@@ -77,71 +54,94 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// --- Widgets internos de la pantalla Home ---
-
-class _Header extends StatelessWidget {
-  final String userName;
-  const _Header({required this.userName});
-
+class _Header extends ConsumerWidget {
+  const _Header();
   @override
-  Widget build(BuildContext context) {
-    return Text(
-      'Hola, $userName',
-      style: const TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userProfileAsync = ref.watch(userProfileProvider);
+    return userProfileAsync.when(
+      loading: () => const Text(
+        'Hola...',
+        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
       ),
-    );
-  }
-}
-
-class _NextAppointmentCard extends StatelessWidget {
-  final Appointment appointment;
-  const _NextAppointmentCard({required this.appointment});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            const Icon(Icons.calendar_today, color: Color(0xFFC62828)),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Próxima donación',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${appointment.date} - ${appointment.time}',
-                  style: const TextStyle(fontSize: 14),
-                ),
-                Text(
-                  appointment.location,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                ),
-              ],
-            ),
-          ],
+      error: (err, stack) => const Text(
+        'Hola',
+        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+      ),
+      data: (user) => Text(
+        'Hola, ${user.name}',
+        style: const TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
         ),
       ),
     );
   }
 }
 
-class _NearbyAlertsSection extends StatelessWidget {
-  final List<Alert> alerts;
-  const _NearbyAlertsSection({required this.alerts});
-
+class _NextAppointmentCard extends ConsumerWidget {
+  const _NextAppointmentCard();
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appointmentAsync = ref.watch(nextAppointmentProvider);
+    return appointmentAsync.when(
+      loading: () => const _LoadingCard(height: 120),
+      error: (err, stack) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text('Error al cargar cita: $err'),
+        ),
+      ),
+      data: (appointment) => Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              const Icon(Icons.calendar_today, color: Color(0xFFC62828)),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Próxima donación',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${appointment.dateLabel} · ${appointment.timeLabel}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    Text(
+                      appointment.location,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.goNamed(CitasScreen.name),
+                child: const Text('Ver'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NearbyAlertsSection extends ConsumerWidget {
+  const _NearbyAlertsSection();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final alertsAsync = ref.watch(nearbyAlertsProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -152,12 +152,21 @@ class _NearbyAlertsSection extends StatelessWidget {
         const SizedBox(height: 12),
         SizedBox(
           height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: alerts.length,
-            itemBuilder: (context, index) {
-              final alert = alerts[index];
-              return _AlertCard(alert: alert);
+          child: alertsAsync.when(
+            loading: () => const Center(child: _LoadingCard(width: 160)),
+            error: (err, stack) => Center(child: Text('Error: $err')),
+            data: (alerts) {
+              if (alerts.isEmpty) {
+                return const Center(child: Text('No hay alertas cerca.'));
+              }
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: alerts.length,
+                itemBuilder: (context, index) {
+                  final alert = alerts[index];
+                  return _AlertCard(alert: alert);
+                },
+              );
             },
           ),
         ),
@@ -167,9 +176,8 @@ class _NearbyAlertsSection extends StatelessWidget {
 }
 
 class _AlertCard extends StatelessWidget {
-  final Alert alert;
+  final AlertEntity alert;
   const _AlertCard({required this.alert});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -185,7 +193,17 @@ class _AlertCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                '${alert.bloodType} - urgente',
+                alert.centerName,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${alert.bloodType} urgente',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -205,30 +223,68 @@ class _AlertCard extends StatelessWidget {
   }
 }
 
-class _ImpactSection extends StatelessWidget {
-  const _ImpactSection();
-
+class _DonationTipSection extends ConsumerWidget {
+  const _DonationTipSection();
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tipAsync = ref.watch(donationTipProvider);
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Tu impacto',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text('Vidas ayudadas: 6', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 4),
-            Text('Ranking: Donador leal', style: TextStyle(fontSize: 16)),
-          ],
+      child: tipAsync.when(
+        loading: () => const _LoadingCard(height: 80),
+        error: (err, stack) => const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('No se pudo cargar el consejo.'),
+        ),
+        data: (tip) => Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(
+                Icons.lightbulb_outline,
+                color: Theme.of(context).colorScheme.primary,
+                size: 30,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Consejo del día',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      tip,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
+  final double? height;
+  final double? width;
+  const _LoadingCard({this.height, this.width});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      width: width,
+      child: const Center(child: CircularProgressIndicator()),
     );
   }
 }

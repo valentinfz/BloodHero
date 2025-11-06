@@ -11,10 +11,12 @@ class AppointmentBookingDateScreen extends StatefulWidget {
   const AppointmentBookingDateScreen({super.key, required this.centerName});
 
   @override
-  State<AppointmentBookingDateScreen> createState() => _AppointmentBookingDateScreenState();
+  State<AppointmentBookingDateScreen> createState() =>
+      _AppointmentBookingDateScreenState();
 }
 
-class _AppointmentBookingDateScreenState extends State<AppointmentBookingDateScreen> {
+class _AppointmentBookingDateScreenState
+    extends State<AppointmentBookingDateScreen> {
   DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
 
   @override
@@ -26,7 +28,10 @@ class _AppointmentBookingDateScreenState extends State<AppointmentBookingDateScr
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Centro: ${widget.centerName}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Centro: ${widget.centerName}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             CalendarDatePicker(
               initialDate: selectedDate,

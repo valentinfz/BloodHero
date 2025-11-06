@@ -18,7 +18,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Datos de ejemplo
-    const userName = 'Sebastián';
+    const userName = 'Usuario';
     const bloodType = 'O-';
     const ranking = 'Donador leal';
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'citas_screen.dart';
+import 'package:bloodhero/presentation/screens/home/home_screen.dart';
 
 class AppointmentConfirmationScreen extends StatelessWidget {
   static const String name = 'appointment_confirmation_screen';
@@ -54,12 +55,14 @@ class AppointmentConfirmationScreen extends StatelessWidget {
               const Spacer(flex: 3),
               FilledButton(
                 onPressed: () => context.goNamed(CitasScreen.name),
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                ),
                 child: const Text('Ver mis citas'),
               ),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () => context.goNamed(CitasScreen.name),
+                onPressed: () => context.goNamed(HomeScreen.name),
                 child: const Text('Volver al inicio'),
               ),
               const Spacer(),

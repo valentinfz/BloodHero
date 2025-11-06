@@ -1,16 +1,14 @@
 import 'package:go_router/go_router.dart';
+// Importamos TODAS las pantallas
 import 'package:bloodhero/presentation/screens/splash/splash_screen.dart';
 import 'package:bloodhero/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:bloodhero/presentation/screens/auth/login_screen.dart';
 import 'package:bloodhero/presentation/screens/auth/register_screen.dart';
-import 'package:bloodhero/presentation/screens/auth/complete_profile_screen.dart';
 import 'package:bloodhero/presentation/screens/auth/forgot_password_screen.dart';
-import 'package:bloodhero/presentation/screens/permissions/permissions_screen.dart';
 import 'package:bloodhero/presentation/screens/home/home_screen.dart';
-import 'package:bloodhero/presentation/screens/map/map_screen.dart';
+import 'package:bloodhero/presentation/screens/centers/centers_screen.dart';
 import 'package:bloodhero/presentation/screens/filters/filter_screen.dart';
 import 'package:bloodhero/presentation/screens/centers/center_detail_screen.dart';
-import 'package:bloodhero/presentation/screens/centers/center_reviews_screen.dart';
 import 'package:bloodhero/presentation/screens/appointments/appointment_booking_center_screen.dart';
 import 'package:bloodhero/presentation/screens/appointments/appointment_booking_date_screen.dart';
 import 'package:bloodhero/presentation/screens/appointments/appointment_booking_time_screen.dart';
@@ -30,6 +28,9 @@ import 'package:bloodhero/presentation/screens/profile/security_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/help_center_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/checkin_qr_screen.dart';
 import 'package:bloodhero/presentation/screens/profile/privacy_policy_screen.dart';
+// Importamos las entidades/modelos necesarios para los 'extra'
+import 'package:bloodhero/data/loaders/centers_loader.dart';
+import 'package:bloodhero/domain/entities/center_entity.dart'; // Import CenterEntity
 
 // GoRouter configuration
 final appRouter = GoRouter(
@@ -56,29 +57,20 @@ final appRouter = GoRouter(
       builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(
-      path: '/complete-profile',
-      name: CompleteProfileScreen.name,
-      builder: (context, state) => const CompleteProfileScreen(),
-    ),
-    GoRoute(
       path: '/forgot-password',
       name: ForgotPasswordScreen.name,
       builder: (context, state) => const ForgotPasswordScreen(),
     ),
-    GoRoute(
-      path: '/permissions',
-      name: PermissionsScreen.name,
-      builder: (context, state) => const PermissionsScreen(),
-    ),
+    // Ruta '/permissions' eliminada
     GoRoute(
       path: '/home',
       name: HomeScreen.name,
       builder: (context, state) => const HomeScreen(),
     ),
     GoRoute(
-      path: '/map',
-      name: MapScreen.name,
-      builder: (context, state) => const MapScreen(),
+      path: '/centers',
+      name: CenterScreen.name,
+      builder: (context, state) => const CenterScreen(),
     ),
     GoRoute(
       path: '/filters',
@@ -89,18 +81,43 @@ final appRouter = GoRouter(
       path: '/center-detail',
       name: CenterDetailScreen.name,
       builder: (context, state) {
-        final centerName = state.extra as String?;
-        return CenterDetailScreen(centerName: centerName);
+        final extra = state.extra;
+        String? nameToPass;
+        MapCenter?
+        centerObjectToPass; // Variable para pasar el objeto si viene del mapa
+
+        if (extra is CenterEntity) {
+          // --- NUEVA CONDICIÓN ---
+          // Si recibimos CenterEntity (desde centers_screen), extraemos el nombre
+          // Y creamos un MapCenter temporal si la pantalla de detalle aún lo necesita
+          // (idealmente CenterDetailScreen solo usaría el nombre para el provider)
+          nameToPass = extra.name;
+          centerObjectToPass = MapCenter(
+            id: '',
+            name: extra.name,
+            address: extra.address,
+            lat: extra.lat,
+            lng: extra.lng,
+            image: extra.image,
+          );
+        } else if (extra is MapCenter) {
+          // Si recibimos MapCenter (quizás de una versión anterior o test), extraemos nombre y pasamos el objeto
+          nameToPass = extra.name;
+          centerObjectToPass = extra;
+        } else if (extra is String?) {
+          // Si recibimos String (o null), lo usamos directamente
+          nameToPass = extra;
+        }
+
+        // Llamamos al constructor pasando ambos parámetros (centerName para el provider, center por compatibilidad)
+        return CenterDetailScreen(
+          centerName: nameToPass,
+          center: centerObjectToPass,
+        );
+        // -----------------------
       },
     ),
-    GoRoute(
-      path: '/center-reviews',
-      name: CenterReviewsScreen.name,
-      builder: (context, state) {
-        final centerName = state.extra as String?;
-        return CenterReviewsScreen(centerName: centerName);
-      },
-    ),
+    // Ruta '/center-reviews' comentada o eliminada
     GoRoute(
       path: '/appointments/book/center',
       name: AppointmentBookingCenterScreen.name,
@@ -135,7 +152,11 @@ final appRouter = GoRouter(
         final center = data?['center'] as String? ?? 'Hospital Central';
         final date = data?['date'] as DateTime? ?? DateTime.now();
         final time = data?['time'] as String? ?? '09:00';
-        return AppointmentBookingConfirmScreen(centerName: center, date: date, time: time);
+        return AppointmentBookingConfirmScreen(
+          centerName: center,
+          date: date,
+          time: time,
+        );
       },
     ),
     GoRoute(
@@ -146,7 +167,11 @@ final appRouter = GoRouter(
         final center = data?['center'] ?? 'Hospital Central';
         final date = data?['date'] ?? '12/11/2025';
         final time = data?['time'] ?? '10:30';
-        return AppointmentConfirmationScreen(center: center, date: date, time: time);
+        return AppointmentConfirmationScreen(
+          center: center,
+          date: date,
+          time: time,
+        );
       },
     ),
     GoRoute(
