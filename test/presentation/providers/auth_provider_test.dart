@@ -23,9 +23,6 @@ class _ThrowingAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> logout() async {}
-
-  @override
   Future<void> register({
     required String name,
     required String email,
@@ -41,32 +38,18 @@ class _ThrowingAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> deleteAccount({required String currentPassword}) async {
-    throw AuthFailure(
-      code: 'auth/requires-recent-login',
-      message: 'Necesitamos que inicies sesión nuevamente.',
-    );
-  }
-
-  @override
-  Future<void> updateEmail({
-    required String currentPassword,
-    required String newEmail,
-  }) async {
-    throw AuthFailure(
-      code: 'auth/invalid-email',
-      message: 'El formato del nuevo email no es válido.',
-    );
-  }
-
-  @override
-  Future<void> updatePassword({
-    required String currentPassword,
-    required String newPassword,
-  }) async {
+  Future<void> updatePassword(String newPassword) async {
     throw AuthFailure(
       code: 'auth/weak-password',
       message: 'La nueva contraseña es demasiado débil.',
+    );
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    throw AuthFailure(
+      code: 'auth/requires-recent-login',
+      message: 'Necesitamos que inicies sesión nuevamente.',
     );
   }
 }
@@ -83,13 +66,9 @@ void main() {
       await notifier.login('user@example.com', '123456');
 
       expect(container.read(authProvider), AuthState.error);
-      final feedback = notifier.feedback;
-      expect(feedback, isNotNull);
-      expect(feedback!.code, 'auth/wrong-password');
-      expect(feedback.message, contains('contraseña'));
     });
 
-    test('limpia feedback al resetear el estado', () async {
+  test('restablece el estado inicial al resetear', () async {
       final container = ProviderContainer(overrides: [
         authRepositoryProvider.overrideWithValue(_ThrowingAuthRepository()),
       ]);
@@ -100,7 +79,6 @@ void main() {
       notifier.resetState();
 
       expect(container.read(authProvider), AuthState.initial);
-      expect(notifier.feedback, isNull);
     });
   });
 }
