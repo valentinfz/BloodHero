@@ -14,6 +14,49 @@ class AppointmentDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<AppointmentActionsState>(
+      appointmentActionsProvider,
+      (previous, next) {
+        final messenger = ScaffoldMessenger.of(context);
+        final notifier = ref.read(appointmentActionsProvider.notifier);
+
+        if (next.errorMessage != null &&
+            next.errorMessage != previous?.errorMessage) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(next.errorMessage!),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+          notifier.clearMessages();
+        }
+
+        if (next.successMessage != null &&
+            next.successMessage != previous?.successMessage) {
+          final action = next.lastSuccessAction;
+          messenger.showSnackBar(
+            SnackBar(content: Text(next.successMessage!)),
+          );
+
+          if (action == AppointmentActionType.cancel && context.mounted) {
+            context.goNamed(CitasScreen.name);
+          } else if (action == AppointmentActionType.reschedule &&
+              context.mounted) {
+            final center = next.pendingRescheduleCenter;
+            if (center != null) {
+              context.pushNamed(
+                AppointmentBookingDateScreen.name,
+                extra: center,
+              );
+            }
+          }
+
+          notifier.clearMessages();
+        }
+      },
+    );
+
+    final actionState = ref.watch(appointmentActionsProvider);
     final appointmentDetailAsync = ref.watch(
       appointmentDetailProvider(appointmentId),
     );
@@ -35,12 +78,21 @@ class AppointmentDetailScreen extends ConsumerWidget {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                _DetailRow(label: 'Centro', value: appointment.center),
-                _DetailRow(label: 'Fecha', value: appointment.date),
-                _DetailRow(label: 'Horario', value: appointment.time),
+                _DetailRow(label: 'Centro', value: appointment.centerName),
+                _DetailRow(label: 'Fecha', value: appointment.dateLabel),
+                _DetailRow(label: 'Horario', value: appointment.timeLabel),
                 _DetailRow(
                   label: 'Tipo de donación',
                   value: appointment.donationType,
+                ),
+                _DetailRow(
+                  label: 'Estado',
+                  value: appointment.status.name,
+                ),
+                _DetailRow(
+                  label: 'Verificación',
+                  value:
+                      appointment.verificationCompleted ? 'Completada' : 'Pendiente',
                 ),
                 const SizedBox(height: 24),
                 const Text(
@@ -60,7 +112,9 @@ class AppointmentDetailScreen extends ConsumerWidget {
                   ),
                 const Spacer(),
                 FilledButton(
-                  onPressed: () => _handleReschedule(context, appointment),
+                  onPressed: actionState.isCancelling
+                      ? null
+                      : () => _handleReschedule(context, ref, appointment),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                   ),
@@ -68,10 +122,13 @@ class AppointmentDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: () => _handleCancel(
-                    context,
-                    ref,
-                  ), // Pasamos ref para posible lógica futura
+                  onPressed: actionState.isCancelling
+                      ? null
+                      : () => _handleCancel(
+                            context,
+                            ref,
+                            appointment.id,
+                          ),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     foregroundColor: Theme.of(context).colorScheme.error,
@@ -79,8 +136,37 @@ class AppointmentDetailScreen extends ConsumerWidget {
                       color: Theme.of(context).colorScheme.error,
                     ),
                   ),
-                  child: const Text('Cancelar turno'),
+                  child: actionState.isCancelling
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Cancelar turno'),
                 ),
+                if (!appointment.verificationCompleted) ...[
+                  const SizedBox(height: 12),
+                  FilledButton.tonal(
+                    onPressed: actionState.isVerifying
+                        ? null
+                        : () => _handleVerify(
+                              context,
+                              ref,
+                              appointment.id,
+                            ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    child: actionState.isVerifying
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child:
+                                CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Validar código de donación'),
+                  ),
+                ],
               ],
             ),
           );
@@ -91,18 +177,49 @@ class AppointmentDetailScreen extends ConsumerWidget {
 
   //Funciones auxiliares para acciones:
 
-  void _handleReschedule(
+  Future<void> _handleReschedule(
     BuildContext context,
+    WidgetRef ref,
     AppointmentDetailEntity appointment,
-  ) {
-    context.pushNamed(
-      AppointmentBookingDateScreen.name,
-      extra: appointment.center,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reprogramar turno'),
+        content: const Text(
+          'Para reprogramar necesitamos liberar tu turno actual. '
+          'Se cancelará la reserva y luego vas a elegir una nueva fecha.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Confirmar y reprogramar'),
+          ),
+        ],
+      ),
     );
-    // TODO: Considerar si se debería cancelar la cita actual antes de reprogramar
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await ref
+        .read(appointmentActionsProvider.notifier)
+        .cancelAppointmentForReschedule(
+          appointmentId: appointment.id,
+          centerName: appointment.centerName,
+        );
   }
 
-  Future<void> _handleCancel(BuildContext context, WidgetRef ref) async {
+  Future<void> _handleCancel(
+    BuildContext context,
+    WidgetRef ref,
+    String appointmentId,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -127,17 +244,68 @@ class AppointmentDetailScreen extends ConsumerWidget {
     );
 
     if (confirmed == true) {
-      // TODO: Aquí iría la lógica para llamar a un método en un provider
-      // que realmente cancele la cita en la base de datos.
-      // Ejemplo: ref.read(appointmentsProvider.notifier).cancelAppointment(appointmentId);
-
-      if (!context.mounted)
-        return; // Buena práctica verificar `mounted` después de `await`
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tu turno fue cancelado (simulado).')),
-      );
-      context.goNamed(CitasScreen.name);
+      await ref
+          .read(appointmentActionsProvider.notifier)
+          .cancelAppointment(appointmentId);
     }
+  }
+
+  Future<void> _handleVerify(
+    BuildContext context,
+    WidgetRef ref,
+    String appointmentId,
+  ) async {
+    final controller = TextEditingController();
+    String? code;
+
+    try {
+      code = await showDialog<String>(
+        context: context,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (dialogContext, setState) {
+              final isValid = controller.text.trim().isNotEmpty;
+              return AlertDialog(
+                title: const Text('Ingresar código de verificación'),
+                content: TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Código de verificación',
+                  ),
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.characters,
+                  onChanged: (_) => setState(() {}),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                  FilledButton(
+                    onPressed: isValid
+                        ? () => Navigator.of(dialogContext)
+                            .pop(controller.text.trim())
+                        : null,
+                    child: const Text('Verificar'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      controller.dispose();
+    }
+
+    if (code == null || code.isEmpty) {
+      return;
+    }
+
+    await ref.read(appointmentActionsProvider.notifier).verifyDonationCode(
+          appointmentId: appointmentId,
+          code: code,
+        );
   }
 }
 

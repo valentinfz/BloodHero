@@ -11,11 +11,9 @@ final userImpactStatsProvider = FutureProvider.autoDispose<UserImpactEntity>((re
   // Llamamos al método que obtiene los logros para contar cuántos hay
   final achievements = await repository.getAchievements();
   // Devolvemos una NUEVA entidad UserImpact con el conteo de logros añadido
-  return UserImpactEntity(
-      livesHelped: impactStats.livesHelped,
-      ranking: impactStats.ranking, // Podríamos quitar el ranking si ya no se usa
-      achievementsCount: achievements.length // Añadimos el conteo
-      );
+  return impactStats.copyWith(
+    achievementsCount: achievements.length, // Añadimos el conteo
+  );
 });
 
 // Provider para la lista de logros

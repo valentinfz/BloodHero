@@ -78,7 +78,8 @@ lib/
 │   ├── router/            # GoRouter y definición de rutas
 │   └── theme/             # Temas, colores, layout constants
 ├── data/
-│   └── repositories/      # Implementaciones fake de repositorios
+│   ├── repositories/      # Implementaciones Firebase (y fake para tests)
+│   └── seeds/             # Scripts para poblar datos en Firestore emulado
 ├── domain/
 │   ├── entities/          # Modelos inmutables
 │   └── repositories/      # Contratos a implementar (ej. Firebase)
@@ -103,7 +104,7 @@ lib/
 
 1. **Instalar dependencias**: `flutter pub get`
 2. **Analizar lint**: `flutter analyze`
-3. **Ejecutar pruebas (cuando existan)**: `flutter test`
+3. **Ejecutar pruebas**: `flutter test` (usa `FakeFirebaseFirestore` y seeds determinísticos)
 4. **Lanzar la app**: `flutter run`
 
 > Riverpod utiliza `ProviderScope` en `main.dart`. Cada provider debe mantener la lógica, dejando la UI lo más declarativa posible.
@@ -112,7 +113,11 @@ lib/
 
 ## Consideraciones y próximos pasos
 
-- **Datos reales**: actualmente las fuentes son mock (`FakeCentersRepository`). Sustituir por repositorios conectados a Firebase/Firestore.
+- **Seeds para Firebase**: `FirestoreSeedService` permite poblar colecciones (`centers`, `alerts`, `tips`, `achievements`, `users/*/appointments`) tanto en tests como en un emulador local.
+- **Permisos de ubicación / notificaciones**: la pantalla ya expone la UX; falta implementar la solicitud real mediante `geolocator` o `permission_handler` y `firebase_messaging`/`awesome_notifications`.
+- **Google Fonts**: se está haciendo _runtime fetching_; si se quiere offline, agregar las fuentes `.ttf` en `assets/fonts` y declararlas en `pubspec.yaml`.
+- **OpenStreetMap**: el manifiesto ya contempla `INTERNET`. Evitar uso intensivo de subdominios para respetar el _fair use_ de OSM.
+- **Integración Firebase + Riverpod**: continuar extendiendo providers para manejar cancelaciones/verificaciones en tiempo real.
 - **Permisos de ubicación / notificaciones**: la pantalla ya expone la UX; falta implementar la solicitud real mediante `geolocator` o `permission_handler` y `firebase_messaging`/`awesome_notifications`.
 - **Google Fonts**: se está haciendo _runtime fetching_; si se quiere offline, agregar las fuentes `.ttf` en `assets/fonts` y declararlas en `pubspec.yaml`.
 - **OpenStreetMap**: el manifiesto ya contempla `INTERNET`. Evitar uso intensivo de subdominios para respetar el _fair use_ de OSM.

@@ -14,4 +14,22 @@ class UserEntity {
     required this.city,
     required this.ranking,
   });
+
+  UserEntity copyWith({
+    String? name,
+    String? email,
+    String? phone,
+    String? bloodType,
+    String? city,
+    String? ranking,
+  }) {
+    return UserEntity(
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      bloodType: bloodType ?? this.bloodType,
+      city: city ?? this.city,
+      ranking: ranking ?? this.ranking,
+    );
+  }
 }

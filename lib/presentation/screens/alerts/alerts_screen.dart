@@ -40,28 +40,26 @@ class AlertsScreen extends ConsumerWidget {
           return ListView.separated(
             padding: kScreenPadding,
             itemBuilder: (context, index) {
-              final alert =
-                  alerts[index]; // Asegúrate de que `alerts` sea List<AlertEntity>
+              final alert = alerts[index];
               return InfoCard(
-                title: 'Se necesita ${alert.bloodType}',
+                title: alert.centerName,
                 body: [
+                  Text('Se necesita sangre ${alert.bloodType}'),
                   Text('Distancia: ${alert.distance}'),
                   Text('Vence: ${alert.expiration}'),
                 ],
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   debugPrint("Navegando a detalle de alerta...");
-                  // TODO: Idealmente, AlertEntity debería tener un ID o el nombre del centro
-                  // para pasar información más útil a la pantalla de detalle.
                   context.pushNamed(
                     AlertDetailScreen.name,
-                    extra:
-                        'Centro de Ejemplo ${alert.bloodType}', // Pasa algo más específico
+                    extra: alert.centerName,
                   );
                 },
               );
             },
-            separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
+      separatorBuilder: (context, _) =>
+        const SizedBox(height: kCardSpacing),
             itemCount: alerts.length,
           );
         },

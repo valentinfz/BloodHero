@@ -11,4 +11,8 @@ abstract class AuthRepository {
   });
 
   Future<void> forgotPassword(String email);
+
+  Future<void> updatePassword(String newPassword);
+
+  Future<void> deleteAccount();
 }

@@ -48,9 +48,7 @@ final userImpactProvider = FutureProvider.autoDispose<UserImpactEntity>((
   final achievements = await repository.getAchievements();
 
   debugPrint("Provider: Impacto y logros obtenidos.");
-  return UserImpactEntity(
-    livesHelped: impactStats.livesHelped,
-    ranking: impactStats.ranking,
+  return impactStats.copyWith(
     achievementsCount: achievements.length,
   );
 });

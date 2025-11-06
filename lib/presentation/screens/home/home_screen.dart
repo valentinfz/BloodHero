@@ -115,7 +115,7 @@ class _NextAppointmentCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${appointment.date} - ${appointment.time}',
+                      '${appointment.dateLabel} · ${appointment.timeLabel}',
                       style: const TextStyle(fontSize: 14),
                     ),
                     Text(
@@ -192,6 +192,16 @@ class _AlertCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Text(
+                alert.centerName,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
               Text(
                 '${alert.bloodType} urgente',
                 style: const TextStyle(

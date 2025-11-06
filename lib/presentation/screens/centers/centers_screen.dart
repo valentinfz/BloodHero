@@ -93,9 +93,9 @@ class _CenterScreenState extends ConsumerState<CenterScreen> {
     final query = Uri.encodeComponent('${c.name} ${c.address}');
     final uri = Uri.parse('https://www.google.com/search?q=$query');
 
-    if (!context.mounted) return;
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
+  if (!mounted) return;
+  final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo abrir la búsqueda en Google')),
       );
@@ -242,8 +242,8 @@ class _CenterScreenState extends ConsumerState<CenterScreen> {
                         controller: scrollController,
                         padding: kScreenPadding,
                         itemCount: ordered.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: kCardSpacing),
+            separatorBuilder: (context, _) =>
+              const SizedBox(height: kCardSpacing),
                         itemBuilder: (context, index) {
                           final center = ordered[index];
                           final isSel = _selectedIndex == index;
@@ -313,7 +313,8 @@ class _CenterScreenState extends ConsumerState<CenterScreen> {
               : 'Centrar en mi ubicación',
           onPressed: () async {
             if (userLatLng == null) {
-              final _ = ref.refresh(userLocationProvider);
+              // ref.refresh(userLocationProvider);
+              ref.invalidate(userLocationProvider);
             } else {
               _mapController.move(userLatLng, 14);
             }

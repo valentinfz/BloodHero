@@ -45,8 +45,8 @@ class HistoryScreen extends ConsumerWidget {
                           : Colors.red.shade700,
                     ),
                   ),
-                  title: Text('${item.date} · ${item.type}'),
-                  subtitle: Text(item.center),
+                  title: Text('${item.dateLabel} · ${item.donationType}'),
+                  subtitle: Text(item.centerName),
                   trailing: Text(
                     item.wasCompleted ? 'Realizada' : 'Cancelada',
                     style: TextStyle(
@@ -59,7 +59,8 @@ class HistoryScreen extends ConsumerWidget {
                 ),
               );
             },
-            separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
+      separatorBuilder: (context, _) =>
+        const SizedBox(height: kCardSpacing),
             itemCount: history.length,
           );
         },

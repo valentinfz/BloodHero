@@ -31,12 +31,12 @@ class CitasScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final appointment = appointments[index];
               return InfoCard(
-                title: '${appointment.date} · ${appointment.time}',
+                title: '${appointment.dateLabel} · ${appointment.timeLabel}',
                 body: [Text(appointment.location)],
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.pushNamed(
                   AppointmentDetailScreen.name,
-                  extra: '1', // TODO: Pasar el ID real de la cita
+                  extra: appointment.id,
                 ),
               );
             },

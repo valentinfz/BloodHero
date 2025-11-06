@@ -11,9 +11,7 @@ final userImpactStatsProvider = FutureProvider.autoDispose<UserImpactEntity>((
   final repository = ref.watch(centersRepositoryProvider);
   final impactStats = await repository.getUserImpactStats();
   final achievements = await repository.getAchievements();
-  return UserImpactEntity(
-    livesHelped: impactStats.livesHelped,
-    ranking: impactStats.ranking,
+  return impactStats.copyWith(
     achievementsCount: achievements.length, // Añadimos el conteo
   );
 });

@@ -19,6 +19,11 @@ abstract class CentersRepository {
   // Métodos para Citas
   Future<List<AppointmentEntity>> getAppointments();
   Future<AppointmentDetailEntity> getAppointmentDetails(String appointmentId);
+  Future<void> cancelAppointment(String appointmentId);
+  Future<bool> verifyDonationCode({
+    required String appointmentId,
+    required String code,
+  });
   Future<List<String>> getAvailableTimes(String centerName, DateTime date);
   Future<void> bookAppointment({
     required String centerName,
@@ -43,4 +48,8 @@ abstract class CentersRepository {
 
   // Método para el Historial
   Future<List<HistoryItemEntity>> getDonationHistory();
+
+  Future<void> updateUserProfile(UserEntity updatedUser);
+
+  Future<void> registerAlertResponse({required String alertId});
 }

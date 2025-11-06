@@ -1,10 +1,12 @@
+import 'package:bloodhero/config/theme/layout_constants.dart';
+import 'package:bloodhero/domain/entities/achievement_entity.dart';
+import 'package:bloodhero/domain/entities/user_impact_entity.dart';
+import 'package:bloodhero/presentation/providers/achievement_provider.dart';
+import 'package:bloodhero/presentation/widgets/custom_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bloodhero/presentation/widgets/custom_bottom_nav_bar.dart';
-import 'package:bloodhero/config/theme/layout_constants.dart';
-import '../../../domain/entities/user_impact_entity.dart';
-import '../../providers/achievement_provider.dart';
+
 import 'impact_detail_screen.dart';
 
 class ImpactScreen extends ConsumerWidget {
@@ -13,8 +15,8 @@ class ImpactScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(userImpactStatsProvider);
-    final achievementsAsync = ref.watch(achievementsProvider);
+  final statsAsync = ref.watch(userImpactStatsProvider);
+  final achievementsAsync = ref.watch(achievementsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tu impacto')),
@@ -35,37 +37,13 @@ class ImpactScreen extends ConsumerWidget {
           achievementsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, stack) => Text('Error al cargar logros: $err'),
-            data: (achievements) {
-              if (achievements.isEmpty) {
-                return const Text('Aún no has desbloqueado logros.');
-              }
-              return Column(
-                children: achievements.map((achievement) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: kCardSpacing),
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(kCardBorderRadius),
-                      ),
-                      child: ListTile(
-                        leading: Icon(
-                          // TODO: Mapear achievement.iconName a un IconData real si es necesario
-                          Icons.emoji_events,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        title: Text(achievement.title),
-                        subtitle: Text(achievement.description),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.pushNamed(
-                          ImpactDetailScreen.name,
-                          extra: achievement.title,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              );
-            },
+            data: (achievements) => _AchievementList(
+              achievements: achievements,
+              onTapAchievement: (item) => context.pushNamed(
+                ImpactDetailScreen.name,
+                extra: item.title,
+              ),
+            ),
           ),
         ],
       ),
@@ -91,7 +69,10 @@ class _ImpactSummary extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _ImpactValue(label: 'Vidas', value: stats.livesHelped.toString()),
-            _ImpactValue(label: 'Donaciones', value: '8'),
+            _ImpactValue(
+              label: 'Donaciones',
+              value: stats.totalDonations.toString(),
+            ),
             _ImpactValue(
               label: 'Logros',
               value: stats.achievementsCount?.toString() ?? '0',
@@ -134,6 +115,62 @@ class _LoadingCard extends StatelessWidget {
     return SizedBox(
       height: height,
       child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class _AchievementList extends StatelessWidget {
+  const _AchievementList({
+    required this.achievements,
+    required this.onTapAchievement,
+  });
+
+  final List<AchievementEntity> achievements;
+  final ValueChanged<AchievementEntity> onTapAchievement;
+
+  IconData _resolveIcon(String iconName) {
+    switch (iconName) {
+      case 'blood_drop':
+        return Icons.bloodtype;
+      case 'calendar':
+        return Icons.calendar_month;
+      case 'medal':
+        return Icons.emoji_events;
+      case 'group':
+        return Icons.groups;
+      default:
+        return Icons.workspace_premium;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (achievements.isEmpty) {
+      return const Text('Aún no has desbloqueado logros.');
+    }
+
+    return Column(
+      children: achievements.map((achievement) {
+        final icon = _resolveIcon(achievement.iconName);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: kCardSpacing),
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(kCardBorderRadius),
+            ),
+            child: ListTile(
+              leading: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: Text(achievement.title),
+              subtitle: Text(achievement.description),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => onTapAchievement(achievement),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

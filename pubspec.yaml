@@ -31,6 +31,8 @@ dependencies:
 
   # Compartir logros y contenido
   share_plus: ^12.0.1
+  path_provider: ^2.1.4
+  qr_flutter: ^4.1.0
 
   # Dependencias de Firebase:
   firebase_core: ^3.1.1   # Necesario para inicializar Firebase
@@ -43,6 +45,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  fake_cloud_firestore: ^3.0.2
+  firebase_auth_mocks: ^0.14.2
 
 flutter:
   uses-material-design: true

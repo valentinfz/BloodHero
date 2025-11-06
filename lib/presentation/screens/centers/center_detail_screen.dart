@@ -28,7 +28,7 @@ class CenterDetailScreen extends ConsumerWidget {
             fit: BoxFit.cover,
             height: 180,
             width: double.infinity,
-            errorBuilder: (_, __, ___) => Image.asset(
+            errorBuilder: (context, error, stackTrace) => Image.asset(
               // Fallback a placeholder si la red falla
               placeholder,
               fit: BoxFit.cover,
@@ -42,7 +42,7 @@ class CenterDetailScreen extends ConsumerWidget {
             height: 180,
             width: double.infinity,
             // Fallback a placeholder si el asset no carga
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (context, error, stackTrace) => Container(
               height: 180,
               color: Colors.grey[300],
               child: const Center(
@@ -106,8 +106,9 @@ class CenterDetailScreen extends ConsumerWidget {
                     final uri = Uri.parse(
                       'https://www.google.com/search?q=$query',
                     );
+                    final messenger = ScaffoldMessenger.of(context);
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Text('Abriendo reseñas...'),
                         duration: Duration(seconds: 1),
@@ -121,7 +122,7 @@ class CenterDetailScreen extends ConsumerWidget {
                       );
                     } else {
                       if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(
                           content: Text('No se pudo abrir Google'),
                         ),
