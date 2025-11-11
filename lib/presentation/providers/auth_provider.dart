@@ -122,6 +122,20 @@ class AuthNotifier extends Notifier<AuthState> {
     state = const AuthInitial();
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _runSideOperation(() {
+      return ref
+          .read(authRepositoryProvider)
+          .changePassword(
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+          );
+    });
+  }
+
   void resetState() {
     state = const AuthInitial();
   }

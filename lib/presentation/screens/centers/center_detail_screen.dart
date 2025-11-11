@@ -28,8 +28,14 @@ class CenterDetailScreen extends ConsumerWidget {
             fit: BoxFit.cover,
             height: 180,
             width: double.infinity,
-            errorBuilder: (_, __, ___) => Image.asset(
-              // Fallback a placeholder si la red falla
+            // errorBuilder: (_, __, ___) => Image.asset(
+            //   // Fallback a placeholder si la red falla
+            //   placeholder,
+            //   fit: BoxFit.cover,
+            //   height: 180,
+            //   width: double.infinity,
+            // ),
+            errorBuilder: (context, error, stackTrace) => Image.asset(
               placeholder,
               fit: BoxFit.cover,
               height: 180,
@@ -42,7 +48,18 @@ class CenterDetailScreen extends ConsumerWidget {
             height: 180,
             width: double.infinity,
             // Fallback a placeholder si el asset no carga
-            errorBuilder: (_, __, ___) => Container(
+            // errorBuilder: (_, __, ___) => Container(
+            //   height: 180,
+            //   color: Colors.grey[300],
+            //   child: const Center(
+            //     child: Icon(
+            //       Icons.business_outlined,
+            //       size: 50,
+            //       color: Colors.grey,
+            //     ),
+            //   ),
+            // ),
+            errorBuilder: (context, error, stackTrace) => Container(
               height: 180,
               color: Colors.grey[300],
               child: const Center(
@@ -193,7 +210,10 @@ class CenterDetailScreen extends ConsumerWidget {
                   FilledButton.icon(
                     onPressed: () => context.pushNamed(
                       AppointmentBookingDateScreen.name,
-                      extra: centerData.name,
+                      extra: {
+                        'centerId': centerData.id,
+                        'centerName': centerData.name,
+                      },
                     ),
                     icon: const Icon(Icons.calendar_month),
                     label: const Text('Agendar donación'),

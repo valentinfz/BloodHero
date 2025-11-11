@@ -1,8 +1,10 @@
 import 'package:bloodhero/domain/entities/alert_entity.dart';
 import 'package:bloodhero/presentation/providers/home_provider.dart';
+import 'package:bloodhero/presentation/providers/location_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 import '../../widgets/shared/app_button.dart';
 import '../appointments/citas_screen.dart';
@@ -142,6 +144,7 @@ class _NearbyAlertsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final alertsAsync = ref.watch(nearbyAlertsProvider);
+    final userLocationAsync = ref.watch(userLocationProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -151,7 +154,7 @@ class _NearbyAlertsSection extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 100,
+          height: 140,
           child: alertsAsync.when(
             loading: () => const Center(child: _LoadingCard(width: 160)),
             error: (err, stack) => Center(child: Text('Error: $err')),
@@ -159,11 +162,42 @@ class _NearbyAlertsSection extends ConsumerWidget {
               if (alerts.isEmpty) {
                 return const Center(child: Text('No hay alertas cerca.'));
               }
+
+              final userLocation = userLocationAsync.asData?.value;
+              final distanceCalculator = Distance();
+
+              final decoratedAlerts = alerts.map((alert) {
+                if (userLocation != null &&
+                    alert.latitude != null &&
+                    alert.longitude != null) {
+                  final meters = distanceCalculator(
+                    LatLng(userLocation.latitude, userLocation.longitude),
+                    LatLng(alert.latitude!, alert.longitude!),
+                  );
+                  final distanceText = meters >= 1000
+                      ? '${(meters / 1000).toStringAsFixed(meters < 10000 ? 1 : 0)} km'
+                      : '${meters.round()} m';
+                  return alert.copyWith(distance: distanceText);
+                }
+
+                if (alert.distance.contains('??') ||
+                    alert.distance.toLowerCase().contains('calculando') ||
+                    alert.distance.isEmpty) {
+                  return alert.copyWith(
+                    distance: userLocationAsync.isLoading
+                        ? 'Calculando distancia...'
+                        : 'Distancia no disponible',
+                  );
+                }
+
+                return alert;
+              }).toList();
+
               return ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: alerts.length,
+                itemCount: decoratedAlerts.length,
                 itemBuilder: (context, index) {
-                  final alert = alerts[index];
+                  final alert = decoratedAlerts[index];
                   return _AlertCard(alert: alert);
                 },
               );
@@ -192,6 +226,18 @@ class _AlertCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if ((alert.centerName ?? '').isNotEmpty) ...[
+                Text(
+                  alert.centerName!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
               Text(
                 '${alert.bloodType} urgente',
                 style: const TextStyle(
@@ -200,10 +246,12 @@ class _AlertCard extends StatelessWidget {
                   color: Color(0xFFC62828),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 12),
               Text(
                 '${alert.distance} · ${alert.expiration}',
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

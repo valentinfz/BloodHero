@@ -14,6 +14,7 @@ final userImpactStatsProvider = FutureProvider.autoDispose<UserImpactEntity>((re
   return UserImpactEntity(
       livesHelped: impactStats.livesHelped,
       ranking: impactStats.ranking, // Podríamos quitar el ranking si ya no se usa
+    totalDonations: impactStats.totalDonations,
       achievementsCount: achievements.length // Añadimos el conteo
       );
 });

@@ -43,7 +43,10 @@ class AppointmentBookingCenterScreen extends ConsumerWidget {
                 ),
                 onTap: () => context.pushNamed(
                   AppointmentBookingDateScreen.name,
-                  extra: center.name,
+                  extra: {
+                    'centerId': center.id,
+                    'centerName': center.name,
+                  },
                 ),
               );
             },

@@ -47,6 +47,26 @@ class FakeCentersRepository implements CentersRepository {
     ),
   ];
 
+  String _formatDateLabel(DateTime date) {
+    const weekdays = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
+    final weekday = weekdays[(date.weekday - 1).clamp(0, 6)];
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$weekday $day/$month';
+  }
+
+  void _validateBookingDate(DateTime date) {
+    final today = DateTime.now();
+    final normalizedToday = DateTime(today.year, today.month, today.day);
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    if (!normalizedDate.isAfter(normalizedToday)) {
+      throw Exception('Las donaciones deben agendarse con al menos 1 día de anticipación.');
+    }
+    if (normalizedDate.weekday == DateTime.sunday) {
+      throw Exception('Los turnos no están disponibles los domingos.');
+    }
+  }
+
   @override
   Future<List<CenterEntity>> getCenters() async {
     final mapCenters = await loadCentersFromAsset(
@@ -77,6 +97,7 @@ class FakeCentersRepository implements CentersRepository {
     if (foundCenter != null) {
       // Usamos los datos reales del JSON, pero mantenemos horarios/servicios hardcodeados por ahora
       return CenterDetailEntity(
+        id: foundCenter.id,
         name: foundCenter.name,
         address: foundCenter.address,
         schedule:
@@ -96,6 +117,7 @@ class FakeCentersRepository implements CentersRepository {
 
     // 4. Si NO se encontró, devuelve datos por defecto (o lanza un error)
     return CenterDetailEntity(
+      id: centerName.toLowerCase().replaceAll(' ', '_'),
       name: centerName, // Muestra el nombre que se buscó
       address: 'Dirección no encontrada',
       schedule: 'Horario no disponible',
@@ -109,18 +131,27 @@ class FakeCentersRepository implements CentersRepository {
   @override
   Future<List<AppointmentEntity>> getAppointments() async {
     await Future.delayed(const Duration(milliseconds: 700));
+    final now = DateTime.now();
     return [
       AppointmentEntity(
         id: '1',
+        centerId: 'hospital_central',
         date: 'Lun 12/11',
         time: '10:30',
         location: 'Hospital Central',
+        donationType: 'Sangre total',
+        scheduledAt: now.copyWith(hour: 10, minute: 30),
+        status: AppointmentStatus.scheduled,
       ),
       AppointmentEntity(
         id: '2',
+        centerId: 'centro_salud_norte',
         date: 'Vie 16/11',
         time: '09:00',
         location: 'Centro de Salud Norte',
+        donationType: 'Plaquetas',
+        scheduledAt: now.add(const Duration(days: 4)).copyWith(hour: 9),
+        status: AppointmentStatus.completed,
       ),
     ];
   }
@@ -132,6 +163,7 @@ class FakeCentersRepository implements CentersRepository {
     await Future.delayed(const Duration(milliseconds: 400));
     return AppointmentDetailEntity(
       id: '1',
+      centerId: 'hospital_central',
       center: 'Hospital Central',
       date: 'Lunes 12 de Noviembre, 2025',
       time: '10:30 hs',
@@ -141,39 +173,122 @@ class FakeCentersRepository implements CentersRepository {
         'Evitá consumir alcohol 24 hs antes.',
         'Desayuná liviano antes de donar.',
       ],
+      scheduledAt: DateTime.now().copyWith(hour: 10, minute: 30),
     );
   }
 
   @override
-  Future<List<String>> getAvailableTimes(
-    String centerName,
-    DateTime date,
-  ) async {
+  Future<List<String>> getAvailableTimes({
+    required String centerId,
+    required DateTime date,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 300));
     return ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
   }
 
   @override
-  Future<void> bookAppointment({
+  Future<AppointmentEntity> bookAppointment({
+    required String centerId,
     required String centerName,
     required DateTime date,
     required String time,
+    required String donationType,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
-    debugPrint(
-      'Cita agendada para $centerName el ${date.day}/${date.month} a las $time',
+    _validateBookingDate(date);
+    await Future.delayed(const Duration(milliseconds: 800));
+    final timeParts = time.split(':');
+    final scheduledAt = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      int.parse(timeParts.first),
+      timeParts.length > 1 ? int.parse(timeParts[1]) : 0,
     );
+
+    final appointment = AppointmentEntity(
+      id: 'fake_${scheduledAt.millisecondsSinceEpoch}',
+      centerId: centerId,
+      date: _formatDateLabel(date),
+      time: time,
+      location: centerName,
+      donationType: donationType,
+      scheduledAt: scheduledAt,
+      status: AppointmentStatus.scheduled,
+    );
+
+    debugPrint(
+      'Cita agendada para $centerName ($centerId) el ${appointment.date} a las $time',
+    );
+    return appointment;
+  }
+
+  @override
+  Future<AppointmentEntity> rescheduleAppointment({
+    required String appointmentId,
+    required String centerId,
+    required String centerName,
+    required DateTime date,
+    required String time,
+    required String donationType,
+  }) async {
+    _validateBookingDate(date);
+    await Future.delayed(const Duration(milliseconds: 600));
+    final newAppointment = await bookAppointment(
+      centerId: centerId,
+      centerName: centerName,
+      date: date,
+      time: time,
+      donationType: donationType,
+    );
+    debugPrint(
+      'Reprogramamos cita $appointmentId hacia ${newAppointment.date} ${newAppointment.time}',
+    );
+    return newAppointment;
+  }
+
+  @override
+  Future<void> logDonation({
+    required String appointmentId,
+    required bool wasCompleted,
+    String? notes,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    debugPrint(
+      'Cita $appointmentId registrada como ${wasCompleted ? 'completada' : 'no completada'}. Notas: ${notes ?? 'N/A'}',
+    );
+    // Lógica FAKE:
+    // 1. Buscar la cita en la lista de citas mock.
+    // 2. Actualizar su estado a 'completed' o 'cancelled'.
+    // 3. Añadir una entrada al historial mock.
+    // 4. Si fue completada, simular un incremento en las estadísticas de impacto.
+    return;
+  }
+
+  @override
+  Future<void> cancelAppointment({required String appointmentId}) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    debugPrint('Cita $appointmentId cancelada.');
+    // Lógica FAKE:
+    // 1. Buscar la cita en la lista de citas mock.
+    // 2. Cambiar su estado a 'cancelled'.
+    // 3. Opcionalmente, añadir una entrada al historial como 'cancelada'.
     return;
   }
 
   @override
   Future<AppointmentEntity> getNextAppointment() async {
     await Future.delayed(const Duration(milliseconds: 800));
+    final baseDate = DateTime.now().add(const Duration(days: 3));
+    final scheduledAt = DateTime(baseDate.year, baseDate.month, baseDate.day, 10, 30);
     return AppointmentEntity(
       id: '1',
-      date: 'Lun 12/11',
+      centerId: 'hospital_central',
+      date: _formatDateLabel(scheduledAt),
       time: '10:30',
       location: 'Hospital Central',
+      donationType: 'Sangre total',
+      scheduledAt: scheduledAt,
+      status: AppointmentStatus.scheduled,
     );
   }
 
@@ -181,16 +296,29 @@ class FakeCentersRepository implements CentersRepository {
   Future<List<AlertEntity>> getNearbyAlerts() async {
     await Future.delayed(const Duration(milliseconds: 1200));
     return [
-      AlertEntity(bloodType: 'O-', distance: '2 km', expiration: 'vence hoy'),
+      AlertEntity(
+        bloodType: 'O-',
+        expiration: 'vence hoy',
+        distance: '2 km',
+        centerName: 'Hospital Central',
+        latitude: -34.6037,
+        longitude: -58.3816,
+      ),
       AlertEntity(
         bloodType: 'A+',
-        distance: '5 km',
         expiration: 'vence en 2 días',
+        distance: '5 km',
+        centerName: 'Clínica del Norte',
+        latitude: -34.5481,
+        longitude: -58.4896,
       ),
       AlertEntity(
         bloodType: 'B-',
-        distance: '8 km',
         expiration: 'vence en 3 días',
+        distance: '8 km',
+        centerName: 'Hospital Sur',
+        latitude: -34.7206,
+        longitude: -58.2620,
       ),
     ];
   }
@@ -221,13 +349,39 @@ class FakeCentersRepository implements CentersRepository {
   @override
   Future<UserImpactEntity> getUserImpactStats() async {
     await Future.delayed(const Duration(milliseconds: 600));
-    return const UserImpactEntity(livesHelped: 12, ranking: 'Donador Leal');
+    final totalDonations = 4;
+    final levelInfo = _computeLevel(totalDonations);
+    return UserImpactEntity(
+      livesHelped: 12,
+      ranking: 'Donador Leal',
+      totalDonations: totalDonations,
+      currentLevel: levelInfo.current,
+      nextLevel: levelInfo.next,
+      donationsToNextLevel: levelInfo.donationsToNextLevel,
+    );
   }
 
   @override
   Future<List<AchievementEntity>> getAchievements() async {
     await Future.delayed(const Duration(milliseconds: 900));
-    return _achievements;
+    final inferred = _levels
+        .where((level) => level.minDonations <= 4)
+        .map(
+          (level) => AchievementEntity(
+            title: level.name,
+            description: level.description,
+            iconName: level.badgeEmoji,
+          ),
+        );
+
+    final merged = {
+      for (final achievement in _achievements)
+        achievement.title: achievement,
+      for (final achievement in inferred)
+        achievement.title: achievement,
+    };
+
+    return merged.values.toList();
   }
 
   @override
@@ -257,22 +411,28 @@ class FakeCentersRepository implements CentersRepository {
     await Future.delayed(const Duration(milliseconds: 500));
     return const [
       HistoryItemEntity(
+        appointmentId: 'hist_1',
+        centerId: 'hospital_central',
         date: '12/11/2025',
         center: 'Hospital Central',
         type: 'Sangre total',
-        wasCompleted: true,
+        status: AppointmentStatus.completed,
       ),
       HistoryItemEntity(
+        appointmentId: 'hist_2',
+        centerId: 'banco_sangre_norte',
         date: '05/09/2025',
         center: 'Banco de Sangre Norte',
         type: 'Plaquetas',
-        wasCompleted: true,
+        status: AppointmentStatus.completed,
       ),
       HistoryItemEntity(
+        appointmentId: 'hist_3',
+        centerId: 'clinica_san_martin',
         date: '18/06/2025',
         center: 'Clínica San Martín',
         type: 'Sangre total',
-        wasCompleted: false,
+        status: AppointmentStatus.cancelled,
       ),
     ];
   }
@@ -293,3 +453,109 @@ class FakeCentersRepository implements CentersRepository {
     );
   }
 }
+
+class _LevelResult {
+  final AchievementLevel? current;
+  final AchievementLevel? next;
+  final int donationsToNextLevel;
+
+  const _LevelResult({
+    required this.current,
+    required this.next,
+    required this.donationsToNextLevel,
+  });
+}
+
+_LevelResult _computeLevel(int totalDonations) {
+  AchievementLevel? current;
+  AchievementLevel? next;
+  for (final level in _levels) {
+    if (totalDonations >= level.minDonations) {
+      current = level;
+    } else {
+      next ??= level;
+      break;
+    }
+  }
+
+  final donationsToNext = next == null
+      ? 0
+      : (next.minDonations - totalDonations).clamp(0, next.minDonations);
+
+  return _LevelResult(
+    current: current,
+    next: next,
+    donationsToNextLevel: donationsToNext,
+  );
+}
+
+const List<AchievementLevel> _levels = [
+  AchievementLevel(
+    level: 1,
+    name: 'Primer Héroe',
+    title: '🩸 Nivel 1 – Donante Inicial',
+    minDonations: 1,
+    reward: 'Badge + mensaje de bienvenida',
+    description:
+        'Tu primera donación puede salvar hasta 3 vidas. ¡Bienvenido a la comunidad BloodHero!',
+    badgeEmoji: '🩸',
+  ),
+  AchievementLevel(
+    level: 2,
+    name: 'Segundo Pulso',
+    title: '❤️ Nivel 2 – Donante Comprometido',
+    minDonations: 3,
+    reward: 'Insignia + contador visible',
+    description: 'Tu compromiso comienza a marcar la diferencia.',
+    badgeEmoji: '❤️',
+  ),
+  AchievementLevel(
+    level: 3,
+    name: 'Corazón Constante',
+    title: '💪 Nivel 3 – Donante Frecuente',
+    minDonations: 5,
+    reward: 'Fondo especial de perfil',
+    description:
+        'Gracias por donar de manera regular. ¡Sos ejemplo de constancia!',
+    badgeEmoji: '💪',
+  ),
+  AchievementLevel(
+    level: 4,
+    name: 'Río de Vida',
+    title: '🏅 Nivel 4 – Donante Avanzado',
+    minDonations: 10,
+    reward: 'Descuento o prioridad en eventos solidarios',
+    description: 'Tu constancia fluye como la vida misma.',
+    badgeEmoji: '🏅',
+  ),
+  AchievementLevel(
+    level: 5,
+    name: 'Guardian del Plasma',
+    title: '🕊️ Nivel 5 – Donante Solidario',
+    minDonations: 15,
+    reward: 'Badge dorada + reconocimiento en ranking local',
+    description:
+        'Sos parte esencial de cada historia que ayudás a escribir.',
+    badgeEmoji: '🕊️',
+  ),
+  AchievementLevel(
+    level: 6,
+    name: 'Embajador BloodHero',
+    title: '🌟 Nivel 6 – Donante Elite',
+    minDonations: 20,
+    reward: 'Certificado digital + mención en redes / leaderboard',
+    description:
+        'Inspirás a otros a salvar vidas. ¡Gracias por tu ejemplo!',
+    badgeEmoji: '🌟',
+  ),
+  AchievementLevel(
+    level: 7,
+    name: 'Corazón de Platino',
+    title: '💎 Nivel 7 – Donante Legendario',
+    minDonations: 30,
+    reward: 'Reconocimiento legendario en la comunidad BloodHero',
+    description:
+        'Tu legado salva vidas una y otra vez. ¡Gracias por tu compromiso legendario!',
+    badgeEmoji: '💎',
+  ),
+];

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bloodhero/presentation/providers/home_provider.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 import '../../widgets/menu_button.dart';
 import '../auth/login_screen.dart';
@@ -11,16 +13,13 @@ import 'checkin_qr_screen.dart';
 import 'privacy_policy_screen.dart';
 import '../history/history_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   static const String name = 'profile_screen';
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Datos de ejemplo
-    const userName = 'Usuario';
-    const bloodType = 'O-';
-    const ranking = 'Donador leal';
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userProfileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -36,65 +35,71 @@ class ProfileScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            children: [
-              const _UserInfoSection(
-                userName: userName,
-                bloodType: bloodType,
-                ranking: ranking,
-              ),
-              const SizedBox(height: 32),
-              MenuButton(
-                text: 'Editar perfil',
-                onPressed: () => context.pushNamed(EditProfileScreen.name),
-                isOutlined: true,
-              ),
-              const SizedBox(height: 16),
-              MenuButton(
-                text: 'Historial de donaciones',
-                onPressed: () => context.pushNamed(HistoryScreen.name),
-                isOutlined: true,
-              ),
-              const SizedBox(height: 16),
-              MenuButton(
-                text: 'Preferencias',
-                onPressed: () => context.pushNamed(PreferencesScreen.name),
-                isOutlined: true,
-              ),
-              const SizedBox(height: 16),
-              MenuButton(
-                text: 'Seguridad',
-                onPressed: () => context.pushNamed(SecurityScreen.name),
-                isOutlined: true,
-              ),
-              const SizedBox(height: 16),
-              MenuButton(
-                text: 'Centro de ayuda',
-                onPressed: () => context.pushNamed(HelpCenterScreen.name),
-                isOutlined: true,
-              ),
-              const SizedBox(height: 16),
-              MenuButton(
-                text: 'Check-in QR',
-                onPressed: () => context.pushNamed(CheckInQrScreen.name),
-                isOutlined: true,
-              ),
-              const SizedBox(height: 16),
-              MenuButton(
-                text: 'Política de privacidad',
-                onPressed: () => context.pushNamed(PrivacyPolicyScreen.name),
-                isOutlined: true,
-              ),
-              const SizedBox(height: 16),
-              MenuButton(
-                text: 'Cerrar sesión',
-                onPressed: () {
-                  context.goNamed(LoginScreen.name);
-                },
-                isOutlined: false,
-                isDestructive: true,
-              ),
-            ],
+          child: userProfileAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(
+              child: Text('Error al cargar el perfil: $error'),
+            ),
+            data: (user) => Column(
+              children: [
+                _UserInfoSection(
+                  userName: user.name,
+                  bloodType: user.bloodType,
+                  ranking: user.ranking,
+                ),
+                const SizedBox(height: 32),
+                MenuButton(
+                  text: 'Editar perfil',
+                  onPressed: () => context.pushNamed(EditProfileScreen.name),
+                  isOutlined: true,
+                ),
+                const SizedBox(height: 16),
+                MenuButton(
+                  text: 'Historial de donaciones',
+                  onPressed: () => context.pushNamed(HistoryScreen.name),
+                  isOutlined: true,
+                ),
+                const SizedBox(height: 16),
+                MenuButton(
+                  text: 'Preferencias',
+                  onPressed: () => context.pushNamed(PreferencesScreen.name),
+                  isOutlined: true,
+                ),
+                const SizedBox(height: 16),
+                MenuButton(
+                  text: 'Seguridad',
+                  onPressed: () => context.pushNamed(SecurityScreen.name),
+                  isOutlined: true,
+                ),
+                const SizedBox(height: 16),
+                MenuButton(
+                  text: 'Centro de ayuda',
+                  onPressed: () => context.pushNamed(HelpCenterScreen.name),
+                  isOutlined: true,
+                ),
+                const SizedBox(height: 16),
+                MenuButton(
+                  text: 'Check-in QR',
+                  onPressed: () => context.pushNamed(CheckInQrScreen.name),
+                  isOutlined: true,
+                ),
+                const SizedBox(height: 16),
+                MenuButton(
+                  text: 'Política de privacidad',
+                  onPressed: () => context.pushNamed(PrivacyPolicyScreen.name),
+                  isOutlined: true,
+                ),
+                const SizedBox(height: 16),
+                MenuButton(
+                  text: 'Cerrar sesión',
+                  onPressed: () {
+                    context.goNamed(LoginScreen.name);
+                  },
+                  isOutlined: false,
+                  isDestructive: true,
+                ),
+              ],
+            ),
           ),
         ),
       ),

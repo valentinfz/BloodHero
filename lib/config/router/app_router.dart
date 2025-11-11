@@ -130,8 +130,36 @@ final appRouter = GoRouter(
       path: '/appointments/book/date',
       name: AppointmentBookingDateScreen.name,
       builder: (context, state) {
-        final centerName = state.extra as String? ?? 'Hospital Central';
-        return AppointmentBookingDateScreen(centerName: centerName);
+        String centerName = 'Hospital Central';
+        String centerId = 'hospital_central';
+        String? appointmentId;
+        String? donationType;
+        DateTime? initialDate;
+        String? initialTime;
+
+        final extra = state.extra;
+        if (extra is Map<String, dynamic>) {
+          centerName = extra['centerName'] as String? ?? centerName;
+          centerId = extra['centerId'] as String? ?? centerId;
+          appointmentId = extra['appointmentId'] as String?;
+          donationType = extra['donationType'] as String?;
+          final rawInitialDate = extra['initialDate'];
+          if (rawInitialDate is DateTime) {
+            initialDate = rawInitialDate;
+          }
+          initialTime = extra['initialTime'] as String?;
+        } else if (extra is String?) {
+          centerName = extra ?? centerName;
+        }
+
+        return AppointmentBookingDateScreen(
+          centerId: centerId,
+          centerName: centerName,
+          appointmentId: appointmentId,
+          donationType: donationType,
+          initialScheduledDate: initialDate,
+          initialTime: initialTime,
+        );
       },
     ),
     GoRoute(
@@ -141,7 +169,19 @@ final appRouter = GoRouter(
         final data = state.extra as Map<String, dynamic>?;
         final center = data?['center'] as String? ?? 'Hospital Central';
         final date = data?['date'] as DateTime? ?? DateTime.now();
-        return AppointmentBookingTimeScreen(centerName: center, date: date);
+        final centerId =
+            data?['centerId'] as String? ?? 'hospital_central';
+        final appointmentId = data?['appointmentId'] as String?;
+        final donationType = data?['donationType'] as String?;
+        final initialTime = data?['initialTime'] as String?;
+        return AppointmentBookingTimeScreen(
+          centerId: centerId,
+          centerName: center,
+          date: date,
+          appointmentId: appointmentId,
+          donationType: donationType,
+          initialTime: initialTime,
+        );
       },
     ),
     GoRoute(
@@ -152,10 +192,14 @@ final appRouter = GoRouter(
         final center = data?['center'] as String? ?? 'Hospital Central';
         final date = data?['date'] as DateTime? ?? DateTime.now();
         final time = data?['time'] as String? ?? '09:00';
+        final appointmentId = data?['appointmentId'] as String?;
         return AppointmentBookingConfirmScreen(
+          centerId: data?['centerId'] as String? ?? 'hospital_central',
           centerName: center,
           date: date,
           time: time,
+          donationType: data?['donationType'] as String? ?? 'Sangre total',
+          appointmentId: appointmentId,
         );
       },
     ),
@@ -163,14 +207,16 @@ final appRouter = GoRouter(
       path: '/appointments/confirmation',
       name: AppointmentConfirmationScreen.name,
       builder: (context, state) {
-        final data = state.extra as Map<String, String>?;
-        final center = data?['center'] ?? 'Hospital Central';
-        final date = data?['date'] ?? '12/11/2025';
-        final time = data?['time'] ?? '10:30';
+        final data = state.extra as Map<String, dynamic>?;
+        final center = data?['center'] as String? ?? 'Hospital Central';
+        final date = data?['date'] as String? ?? '12/11/2025';
+        final time = data?['time'] as String? ?? '10:30';
+        final mode = data?['mode'] as String?;
         return AppointmentConfirmationScreen(
           center: center,
           date: date,
           time: time,
+          isReschedule: mode == 'reschedule',
         );
       },
     ),

@@ -1,11 +1,49 @@
+import 'package:bloodhero/config/theme/layout_constants.dart';
+import 'package:bloodhero/presentation/providers/auth_provider.dart';
+import 'package:bloodhero/presentation/widgets/shared/app_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SecurityScreen extends StatelessWidget {
+class SecurityScreen extends ConsumerStatefulWidget {
   static const String name = 'security_screen';
   const SecurityScreen({super.key});
 
   @override
+  ConsumerState<SecurityScreen> createState() => _SecurityScreenState();
+}
+
+class _SecurityScreenState extends ConsumerState<SecurityScreen> {
+  bool _isChangePasswordExpanded = false;
+  final _formKey = GlobalKey<FormState>();
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _obscureCurrent = true;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
+  ProviderSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _authSubscription =
+        ref.listenManual<AuthState>(authProvider, _handleAuthStateChanges);
+  }
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    _authSubscription?.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final isLoading = authState is AuthLoading;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Seguridad')),
       body: ListView(
@@ -16,13 +54,92 @@ class SecurityScreen extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          ListTile(
-            leading: const Icon(Icons.lock_outline),
-            title: const Text('Cambiar contraseña'),
-            subtitle: const Text('Actualizá tu contraseña regularmente'),
-            onTap: () {
-              // TODO: Cambio de contraseña
-            },
+          Card(
+            child: ExpansionTile(
+              leading: const Icon(Icons.lock_outline),
+              title: const Text('Cambiar contraseña'),
+              subtitle: const Text('Actualizá tu contraseña regularmente'),
+              initiallyExpanded: _isChangePasswordExpanded,
+              onExpansionChanged: (expanded) {
+                setState(() {
+                  _isChangePasswordExpanded = expanded;
+                });
+              },
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: kSectionSpacing,
+                    vertical: kCardSpacing,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        _PasswordField(
+                          label: 'Contraseña actual',
+                          controller: _currentPasswordController,
+                          obscureText: _obscureCurrent,
+                          onToggleVisibility: () {
+                            setState(() => _obscureCurrent = !_obscureCurrent);
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Ingresá tu contraseña actual';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: kCardSpacing),
+                        _PasswordField(
+                          label: 'Nueva contraseña',
+                          controller: _newPasswordController,
+                          obscureText: _obscureNew,
+                          onToggleVisibility: () {
+                            setState(() => _obscureNew = !_obscureNew);
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Ingresá una nueva contraseña';
+                            }
+                            if (value.length < 6) {
+                              return 'Debe tener al menos 6 caracteres';
+                            }
+                            if (value == _currentPasswordController.text) {
+                              return 'Usá una contraseña diferente a la actual';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: kCardSpacing),
+                        _PasswordField(
+                          label: 'Confirmar nueva contraseña',
+                          controller: _confirmPasswordController,
+                          obscureText: _obscureConfirm,
+                          onToggleVisibility: () {
+                            setState(() => _obscureConfirm = !_obscureConfirm);
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Confirmá tu nueva contraseña';
+                            }
+                            if (value != _newPasswordController.text) {
+                              return 'Las contraseñas no coinciden';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: kSectionSpacing),
+                        AppButton.primary(
+                          text:
+                              isLoading ? 'Actualizando...' : 'Actualizar contraseña',
+                          onPressed: isLoading ? null : _submitChangePassword,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.fingerprint),
@@ -51,10 +168,78 @@ class SecurityScreen extends StatelessWidget {
               'Podés solicitar la eliminación de todos tus datos',
             ),
             onTap: () {
-              // TODO: Proceso de eliminación
+              // TODO: Invocar AuthRepository.deleteUserAccount para marcar deletedAt sin borrar el documento.
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _submitChangePassword() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    await ref.read(authProvider.notifier).changePassword(
+          currentPassword: _currentPasswordController.text.trim(),
+          newPassword: _newPasswordController.text.trim(),
+        );
+  }
+
+  void _handleAuthStateChanges(AuthState? previous, AuthState next) {
+    if (!mounted) return;
+
+    if (next is AuthError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(next.message)),
+      );
+      return;
+    }
+
+    if (previous is AuthLoading && next is AuthInitial) {
+      _formKey.currentState?.reset();
+      _currentPasswordController.clear();
+      _newPasswordController.clear();
+      _confirmPasswordController.clear();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tu contraseña fue actualizada.')),
+      );
+    }
+  }
+}
+
+class _PasswordField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final bool obscureText;
+  final VoidCallback onToggleVisibility;
+  final String? Function(String?)? validator;
+
+  const _PasswordField({
+    required this.label,
+    required this.controller,
+    required this.obscureText,
+    required this.onToggleVisibility,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        suffixIcon: IconButton(
+          icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility),
+          onPressed: onToggleVisibility,
+        ),
       ),
     );
   }

@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 class FirebaseAuthRepository implements AuthRepository {
@@ -63,6 +62,9 @@ class FirebaseAuthRepository implements AuthRepository {
         'createdAt': serverTimestamp, // Fecha de creación
         'updatedAt': serverTimestamp, // Fecha de actualización (inicial)
         'deletedAt': null, // null para borrado lógico
+        // --- COMENTARIO: Inicializamos las métricas para evitar valores hardcodeados ---
+        'totalDonations': 0,
+        'livesHelped': 0,
       });
 
       await userCredential.user?.updateDisplayName(name);
@@ -106,12 +108,14 @@ class FirebaseAuthRepository implements AuthRepository {
     try {
       final updateData = Map<String, dynamic>.from(data);
 
-      updateData['updatedAt'] = FieldValue.serverTimestamp();
-
+      // Los timestamps los controla el backend: evitamos sobrescribirlos manualmente.
+      updateData.remove('updatedAt');
       updateData.remove('id');
       updateData.remove('createdAt');
       updateData.remove('deletedAt');
       updateData.remove('email');
+
+      updateData['updatedAt'] = FieldValue.serverTimestamp();
 
       await _firestore.collection('users').doc(_userId).update(updateData);
     } catch (e) {
@@ -123,44 +127,55 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<void> deleteUserAccount() async {
     if (_userId == null) throw Exception('Usuario no autenticado.');
 
-    final String randomPassword = _firestore.collection('users').doc().id;
+    final userRef = _firestore.collection('users').doc(_userId);
 
     try {
-      await _firestore.collection('users').doc(_userId).update({
-        'deletedAt': FieldValue.serverTimestamp(),
-        'email': 'deleted_$_userId@bloodhero.com',
-        'phone': '00000000',
-        'name': 'Usuario Eliminado',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await _firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(userRef);
+        if (!snapshot.exists) {
+          throw Exception('Perfil de usuario no encontrado.');
+        }
 
-      try {
-        await _firebaseAuth.currentUser?.verifyBeforeUpdateEmail(
-          'disabled_$_userId@bloodhero.com',
-        );
-        await _firebaseAuth.currentUser?.updatePassword(randomPassword);
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'requires-recent-login') {
-          if (kDebugMode) {
-            print(
-              'El borrado en Auth falló por "requires-recent-login", ' +
-                  'pero el borrado lógico en Firestore fue exitoso. Procediendo a logout.',
-            );
-          }
-        } else {
-          if (kDebugMode) {
-            print('Error al deshabilitar usuario en Auth: ${e.message}');
-          }
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print('Error desconocido al deshabilitar Auth: $e');
-        }
-      }
+        transaction.update(userRef, {
+          'deletedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      });
 
       await logout();
     } catch (e) {
       throw Exception('Error al eliminar la cuenta: $e');
+    }
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null || user.email == null) {
+      throw Exception('Usuario no autenticado.');
+    }
+
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        throw Exception('La contraseña actual no es correcta.');
+      }
+      if (e.code == 'weak-password') {
+        throw Exception('La nueva contraseña es muy débil.');
+      }
+      throw Exception('No se pudo actualizar la contraseña: ${e.message}');
+    } catch (e) {
+      throw Exception('Error desconocido al cambiar la contraseña.');
     }
   }
 }

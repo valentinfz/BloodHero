@@ -61,7 +61,9 @@ class AlertsScreen extends ConsumerWidget {
                 },
               );
             },
-            separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
+      // separatorBuilder: (_, __) => const SizedBox(height: kCardSpacing),
+      separatorBuilder: (context, _) =>
+        const SizedBox(height: kCardSpacing),
             itemCount: alerts.length,
           );
         },

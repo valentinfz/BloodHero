@@ -14,7 +14,7 @@ void main() async {
   // Inicializa Firebase usando las opciones generadas
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  GoogleFonts.config.allowRuntimeFetching = false;
+  GoogleFonts.config.allowRuntimeFetching = true;
 
   runApp(const ProviderScope(child: MainApp()));
 }

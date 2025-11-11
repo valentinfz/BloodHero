@@ -20,6 +20,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -66,8 +67,18 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: kCardSpacing),
                 CustomTextFormField(
                   labelText: 'Contraseña',
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   controller: _passwordController,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                 ),
                 const SizedBox(height: kCardSpacing),
                 Align(

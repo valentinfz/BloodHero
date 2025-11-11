@@ -51,6 +51,8 @@ final userImpactProvider = FutureProvider.autoDispose<UserImpactEntity>((
   return UserImpactEntity(
     livesHelped: impactStats.livesHelped,
     ranking: impactStats.ranking,
+    // --- COMENTARIO: Se añade totalDonations requerido por el constructor ---
+    totalDonations: impactStats.totalDonations,
     achievementsCount: achievements.length,
   );
 });

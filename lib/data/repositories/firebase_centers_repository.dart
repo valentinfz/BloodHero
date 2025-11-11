@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/alert_detail_entity.dart';
 import '../../domain/entities/alert_entity.dart';
 import '../../domain/entities/appointment_detail_entity.dart';
@@ -38,7 +39,10 @@ class FirebaseCentersRepository implements CentersRepository {
           .map((mc) => CenterEntity.fromMapCenter(mc, distance: '?? km'))
           .toList();
     } catch (e) {
-      print("Error cargando centros desde asset (usado temporalmente): $e");
+      // print("Error cargando centros desde asset (usado temporalmente): $e");
+      debugPrint(
+        'Error cargando centros desde asset (usado temporalmente): $e',
+      );
       throw Exception('Error al cargar los centros.');
     }
 
@@ -79,8 +83,11 @@ class FirebaseCentersRepository implements CentersRepository {
         throw Exception('Centro "$centerName" no encontrado.');
       }
 
-      final data = snapshot.docs.first.data();
+      final docSnapshot = snapshot.docs.first;
+      final data = docSnapshot.data();
+      final centerId = data['id'] as String? ?? docSnapshot.id;
       return CenterDetailEntity(
+        id: centerId,
         name: data['name'] ?? 'Nombre no disponible',
         address: data['address'] ?? 'Dirección no disponible',
         schedule: data['schedule'] ?? 'Horario no disponible',
@@ -108,26 +115,57 @@ class FirebaseCentersRepository implements CentersRepository {
           .collection('users')
           .doc(userId)
           .collection('appointments')
-          // Podríamos ordenar por fecha: .orderBy('timestamp', descending: true)
+          // --- MEJORA: Ordenar por fecha para consistencia ---
+          .orderBy('timestamp', descending: true)
           .get();
 
-      return snapshot.docs.map((doc) {
+      final now = DateTime.now();
+      final upcoming = snapshot.docs.map((doc) {
         final data = doc.data();
         // Convertimos Timestamp de Firestore a DateTime, luego a String
         final timestamp = data['timestamp'] as Timestamp?;
         final date = timestamp?.toDate();
+        final updatedAt = (data['updatedAt'] as Timestamp?)?.toDate();
         final dateString = date != null
-            ? '${date.day}/${date.month}'
+            ? _formatDateLabel(date)
             : 'Fecha inv.'; // Formato simple
         final timeString = data['time'] ?? 'Hora inv.';
+        final rawCenterId = data['centerId'] as String?;
+        final centerId = rawCenterId ?? _slugifyCenterName(data['centerName']);
+
+        // --- Lógica para parsear el estado ---
+        final statusString = data['status'] as String? ?? 'scheduled';
+        final status = AppointmentStatus.values.firstWhere(
+          (e) => e.name == statusString,
+          orElse: () => AppointmentStatus.scheduled, // Fallback seguro
+        );
+        // --- Fin de la lógica de estado ---
 
         return AppointmentEntity(
           id: doc.id,
+          centerId: centerId,
           date: dateString,
           time: timeString,
           location: data['centerName'] ?? 'Centro desconocido',
+          donationType: data['donationType'] ?? 'Sangre total',
+          scheduledAt: date,
+          updatedAt: updatedAt,
+          status: status, // Se pasa el estado parseado
         );
+      }).where((appointment) {
+        if (appointment.status != AppointmentStatus.scheduled) {
+          return false;
+        }
+        final scheduledAt = appointment.scheduledAt;
+        if (scheduledAt == null) {
+          return true;
+        }
+        final normalizedNow = DateTime(now.year, now.month, now.day);
+        final normalizedScheduled =
+            DateTime(scheduledAt.year, scheduledAt.month, scheduledAt.day);
+        return normalizedScheduled.isAfter(normalizedNow);
       }).toList();
+      return upcoming;
     } catch (e) {
       throw Exception('Error al obtener citas: $e');
     }
@@ -160,8 +198,20 @@ class FirebaseCentersRepository implements CentersRepository {
           ? '${date.day} de ${_monthToString(date.month)}, ${date.year}'
           : 'Fecha inválida';
 
+      // --- Lógica para parsear el estado (similar a getAppointments) ---
+      final statusString = data['status'] as String? ?? 'scheduled';
+      final status = AppointmentStatus.values.firstWhere(
+        (e) => e.name == statusString,
+        orElse: () => AppointmentStatus.scheduled,
+      );
+      // --- Fin de la lógica de estado ---
+      final rawCenterId = data['centerId'] as String?;
+      final centerId = rawCenterId ?? _slugifyCenterName(data['centerName']);
+      final updatedAt = (data['updatedAt'] as Timestamp?)?.toDate();
+
       return AppointmentDetailEntity(
         id: doc.id,
+        centerId: centerId,
         center: data['centerName'] ?? 'Centro desconocido',
         date: dateString,
         time: data['time'] ?? 'Hora inválida',
@@ -172,6 +222,9 @@ class FirebaseCentersRepository implements CentersRepository {
           'Evitá consumir alcohol 24 hs antes.',
           'Desayuná liviano antes de donar.',
         ],
+        status: status, // Se pasa el estado parseado
+        scheduledAt: date,
+        updatedAt: updatedAt,
       );
     } catch (e) {
       throw Exception('Error al obtener detalle de la cita: $e');
@@ -179,44 +232,238 @@ class FirebaseCentersRepository implements CentersRepository {
   }
 
   @override
-  Future<List<String>> getAvailableTimes(
-    String centerName,
-    DateTime date,
-  ) async {
+  Future<List<String>> getAvailableTimes({
+    required String centerId,
+    required DateTime date,
+  }) async {
     // Lógica compleja: En una app real, esto consultaría una colección
     // 'availableSlots' filtrando por centro y fecha, y devolviendo los horarios
     // que no estén ya reservados. Por ahora, devolvemos una lista fija.
     await Future.delayed(
       const Duration(milliseconds: 100),
     ); // Simula pequeña demora
+    // debugPrint nos permite inspeccionar los parámetros en modo debug.
+    debugPrint('Mock horarios disponibles para $centerId en $date');
     return ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
   }
 
   @override
-  Future<void> bookAppointment({
+  Future<AppointmentEntity> bookAppointment({
+    required String centerId,
     required String centerName,
     required DateTime date,
     required String time,
+    required String donationType,
   }) async {
     final userId = _userId;
     if (userId == null) throw Exception('Usuario no autenticado.');
 
     try {
-      // Creamos un nuevo documento en la subcolección 'appointments' del usuario
+      _validateBookingDate(date);
+      final timeParts = time.split(':');
+      final scheduledAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        int.parse(timeParts.first),
+        timeParts.length > 1 ? int.parse(timeParts[1]) : 0,
+      );
+
+      final appointmentsCollection = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('appointments');
+
+      final docRef = await appointmentsCollection.add({
+        'centerId': centerId,
+        'centerName': centerName,
+        'timestamp': Timestamp.fromDate(scheduledAt),
+        'time': time,
+        'donationType': donationType,
+        // 'donationType': 'Sangre total', // Valor por defecto (comentado tras normalización)
+        'status': 'scheduled',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      return AppointmentEntity(
+        id: docRef.id,
+        centerId: centerId,
+        date: _formatDateLabel(scheduledAt),
+        time: time,
+        location: centerName,
+        donationType: donationType,
+        scheduledAt: scheduledAt,
+        status: AppointmentStatus.scheduled,
+      );
+    } catch (e) {
+      throw Exception('Error al agendar la cita: $e');
+    }
+  }
+
+  @override
+  Future<AppointmentEntity> rescheduleAppointment({
+    required String appointmentId,
+    required String centerId,
+    required String centerName,
+    required DateTime date,
+    required String time,
+    required String donationType,
+  }) async {
+    final userId = _userId;
+    if (userId == null) throw Exception('Usuario no autenticado.');
+
+    _validateBookingDate(date);
+
+    final timeParts = time.split(':');
+    final scheduledAt = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      int.parse(timeParts.first),
+      timeParts.length > 1 ? int.parse(timeParts[1]) : 0,
+    );
+
+    final userRef = _firestore.collection('users').doc(userId);
+    final appointmentsCollection = userRef.collection('appointments');
+    final existingRef = appointmentsCollection.doc(appointmentId);
+
+    late final String newAppointmentId;
+
+    await _firestore.runTransaction((transaction) async {
+      final existingSnapshot = await transaction.get(existingRef);
+      if (!existingSnapshot.exists) {
+        throw Exception('La cita que querés reprogramar no existe.');
+      }
+
+      transaction.update(existingRef, {
+        'status': 'cancelled',
+        'updatedAt': FieldValue.serverTimestamp(),
+        'cancelReason': 'rescheduled',
+        'rescheduledTo': Timestamp.fromDate(scheduledAt),
+      });
+
+      final newDoc = appointmentsCollection.doc();
+      newAppointmentId = newDoc.id;
+      transaction.set(newDoc, {
+        'centerId': centerId,
+        'centerName': centerName,
+        'timestamp': Timestamp.fromDate(scheduledAt),
+        'time': time,
+        'donationType': donationType,
+        'status': 'scheduled',
+        'createdAt': FieldValue.serverTimestamp(),
+        'rescheduledFrom': appointmentId,
+      });
+    });
+
+    return AppointmentEntity(
+      id: newAppointmentId,
+      centerId: centerId,
+      date: _formatDateLabel(scheduledAt),
+      time: time,
+      location: centerName,
+      donationType: donationType,
+      scheduledAt: scheduledAt,
+      status: AppointmentStatus.scheduled,
+    );
+  }
+
+  @override
+  Future<void> logDonation({
+    required String appointmentId,
+    required bool wasCompleted,
+    String? notes,
+  }) async {
+    final userId = _userId;
+    if (userId == null) throw Exception('Usuario no autenticado.');
+
+    // --- COMENTARIO: Uso de Transacción ---
+    // Se utiliza una transacción de Firestore para asegurar la atomicidad de la
+    // operación. Esto garantiza que todas las operaciones (actualizar cita,
+    // estadísticas y desbloquear logros) se completen exitosamente, o ninguna lo haga.
+  final userRef = _firestore.collection('users').doc(userId);
+
+  // Usamos la transacción solo para actualizar estado de la cita y las métricas.
+  final unlockedTotal = await _firestore.runTransaction<int?>((transaction) async {
+    final appointmentRef =
+      userRef.collection('appointments').doc(appointmentId);
+
+      // 1. Actualizar el estado de la cita.
+      transaction.update(appointmentRef, {
+        'status': wasCompleted ? 'completed' : 'missed',
+        'notes': notes,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Si la donación NO fue completada, terminamos la transacción aquí.
+      if (!wasCompleted) {
+        return null;
+      }
+
+      // 3. Si se completó, leer el estado actual del usuario para calcular el nuevo total.
+      final userDoc = await transaction.get(userRef);
+      final currentDonations = (userDoc.data()?['totalDonations'] as num?)?.toInt() ?? 0;
+      final newTotalDonations = currentDonations + 1;
+
+      // 4. Actualizar las estadísticas del usuario con el nuevo total.
+      transaction.update(userRef, {
+        'totalDonations': newTotalDonations,
+        'livesHelped': FieldValue.increment(3), // Asumimos 3 vidas por donación.
+      });
+
+      // Devolvemos el nuevo total para usarlo fuera de la transacción.
+      return newTotalDonations;
+    });
+
+    // Si no se completó la donación no hay logros que evaluar.
+    if (unlockedTotal == null) return;
+
+    // --- COMENTARIO: Verificación de logros fuera de la transacción ---
+    // Ejecutamos la lógica de logros luego de confirmar la transacción para
+    // simplificar la consistencia (y evitar restricciones de Firestore).
+    final achievementSnapshot = await _firestore
+        .collection('achievements')
+        .where('donationsRequired', isEqualTo: unlockedTotal)
+        .limit(1)
+        .get();
+
+    if (achievementSnapshot.docs.isEmpty) return;
+
+    final achievementDoc = achievementSnapshot.docs.first;
+    final achievementId = achievementDoc.id;
+    final unlockedAchievementRef =
+        userRef.collection('unlockedAchievements').doc(achievementId);
+
+    final existingUnlock = await unlockedAchievementRef.get();
+    if (existingUnlock.exists) return;
+
+    await unlockedAchievementRef.set({
+      'title': achievementDoc.data()['title'],
+      'description': achievementDoc.data()['description'],
+      'iconName': achievementDoc.data()['iconName'],
+      'unlockedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  @override
+  Future<void> cancelAppointment({required String appointmentId}) async {
+    final userId = _userId;
+    if (userId == null) throw Exception('Usuario no autenticado.');
+
+    try {
+      // Simplemente actualizamos el estado de la cita a 'cancelled'.
       await _firestore
           .collection('users')
           .doc(userId)
           .collection('appointments')
-          .add({
-            'centerName': centerName,
-            'timestamp': Timestamp.fromDate(date), // Guardamos como Timestamp
-            'time': time,
-            'donationType': 'Sangre total', // Valor por defecto
-            'status': 'confirmed', // Estado inicial
-            'createdAt': FieldValue.serverTimestamp(), // Fecha de creación
+          .doc(appointmentId)
+          .update({
+            'status': 'cancelled',
+            'updatedAt': FieldValue.serverTimestamp(),
+            'cancelledAt': FieldValue.serverTimestamp(),
           });
     } catch (e) {
-      throw Exception('Error al agendar la cita: $e');
+      throw Exception('Error al cancelar la cita: $e');
     }
   }
 
@@ -247,9 +494,11 @@ class FirebaseCentersRepository implements CentersRepository {
         // Devolvemos una indicando que no hay
         return AppointmentEntity(
           id: '',
+          centerId: 'none',
           date: 'No tenés',
           time: 'próximas citas',
           location: '',
+          donationType: 'Sangre total',
         );
       }
 
@@ -261,12 +510,19 @@ class FirebaseCentersRepository implements CentersRepository {
       final dateString = date != null
           ? '${_dayOfWeekToString(date.weekday)} ${date.day}/${date.month}'
           : 'Fecha inv.';
+      final rawCenterId = data['centerId'] as String?;
+      final centerId = rawCenterId ?? _slugifyCenterName(data['centerName']);
+      final updatedAt = (data['updatedAt'] as Timestamp?)?.toDate();
 
       return AppointmentEntity(
         id: doc.id,
+        centerId: centerId,
         date: dateString,
         time: data['time'] ?? 'Hora inv.',
         location: data['centerName'] ?? 'Centro desconocido',
+        donationType: data['donationType'] ?? 'Sangre total',
+        scheduledAt: date,
+        updatedAt: updatedAt,
       );
     } catch (e) {
       throw Exception('Error al obtener la próxima cita: $e');
@@ -287,10 +543,12 @@ class FirebaseCentersRepository implements CentersRepository {
         final data = doc.data();
         return AlertEntity(
           bloodType: data['bloodType'] ?? '?',
-          // La distancia se calcularía en base a la ubicación del usuario
-          distance: '?? km',
-          // La expiración podría ser una fecha o un texto
           expiration: data['expirationText'] ?? 'Pronto',
+          // La distancia se calculará posteriormente usando la ubicación del usuario.
+          distance: data['distanceText'] as String? ?? 'Calculando distancia...',
+          centerName: data['centerName'] as String?,
+          latitude: (data['latitude'] as num?)?.toDouble(),
+          longitude: (data['longitude'] as num?)?.toDouble(),
         );
       }).toList();
     } catch (e) {
@@ -342,32 +600,93 @@ class FirebaseCentersRepository implements CentersRepository {
 
   @override
   Future<UserImpactEntity> getUserImpactStats() async {
-    // Estos datos podrían estar en el documento del usuario o calcularse
-    await Future.delayed(const Duration(milliseconds: 200)); // Simula carga
-    // Podríamos leer el ranking del UserEntity si lo trajimos antes
-    return const UserImpactEntity(livesHelped: 12, ranking: 'Donador Leal');
+    final userId = _userId;
+    if (userId == null) throw Exception('Usuario no autenticado.');
+
+    try {
+      final doc = await _firestore.collection('users').doc(userId).get();
+      if (!doc.exists) {
+        throw Exception('Perfil de usuario no encontrado para estadísticas.');
+      }
+      final data = doc.data()!;
+
+      // --- COMENTARIO: Lectura de estadísticas desde Firestore ---
+      // Se leen los campos 'livesHelped' y 'totalDonations' del documento
+      // del usuario. Se proveen valores por defecto (0) si los campos no existen.
+      final livesHelped = (data['livesHelped'] as num?)?.toInt() ?? 0;
+      final totalDonations = (data['totalDonations'] as num?)?.toInt() ?? 0;
+      final ranking = data['ranking'] as String? ?? 'Donador';
+
+      return UserImpactEntity(
+        livesHelped: livesHelped,
+        totalDonations: totalDonations,
+        ranking: ranking,
+      );
+    } catch (e) {
+      throw Exception('Error al obtener estadísticas de impacto: $e');
+    }
   }
 
   @override
   Future<List<AchievementEntity>> getAchievements() async {
-    // Podríamos leerlos de una colección 'achievements' o una subcolección del usuario
-    await Future.delayed(const Duration(milliseconds: 300)); // Simula carga
-    return const [
-      AchievementEntity(
-        title: 'Primera Donación',
-        description: '¡Gracias por dar el primer paso!',
-        iconName: 'looks_one',
-      ),
-      AchievementEntity(
-        title: 'Donador Frecuente',
-        description: '3 donaciones en los últimos 6 meses',
-      ),
-      AchievementEntity(
-        title: 'Héroe en Emergencia',
-        description: 'Respondiste a 2 alertas urgentes',
-        iconName: 'local_hospital',
-      ) /* ... otros ... */,
-    ];
+    final userId = _userId;
+    if (userId == null) {
+      // Si no hay usuario, no hay logros que mostrar.
+      return [];
+    }
+
+    try {
+      // Primero buscamos estadísticas para inferir logros basados en niveles.
+      final statsDoc = await _firestore.collection('users').doc(userId).get();
+      final totalDonations =
+          (statsDoc.data()?['totalDonations'] as int?) ?? 0;
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('unlockedAchievements')
+          .orderBy('unlockedAt', descending: true)
+          .get();
+
+      final existing = snapshot.docs.map((doc) {
+        final data = doc.data();
+        final unlockedAtTimestamp = data['unlockedAt'] as Timestamp?;
+
+        return AchievementEntity(
+          title: data['title'] ?? 'Logro sin título',
+          description: data['description'] ?? 'Sin descripción',
+          iconName: data['iconName'],
+          unlockedAt: unlockedAtTimestamp?.toDate(),
+        );
+      }).toList();
+
+      // Añadimos logros basados en la escala BloodHero si aún no están.
+      final inferred = _levels
+          .where((level) => totalDonations >= level.minDonations)
+          .map(
+            (level) => AchievementEntity(
+              title: level.name,
+              description: level.description,
+              iconName: level.badgeEmoji,
+            ),
+          );
+
+      final merged = {
+        for (final achievement in existing) achievement.title: achievement,
+        for (final achievement in inferred) achievement.title: achievement,
+      };
+
+      return merged.values.toList()..sort(
+          (a, b) => (b.unlockedAt ?? DateTime.now())
+              .compareTo(a.unlockedAt ?? DateTime.now()),
+        );
+    } catch (e) {
+      // Manejo de errores, por si la colección no existe o hay problemas de permisos.
+      // ignore: avoid_print
+      // print('Error fetching achievements: $e');
+      debugPrint('Error fetching achievements: $e');
+      return [];
+    }
   }
 
   @override
@@ -424,18 +743,27 @@ class FirebaseCentersRepository implements CentersRepository {
         final dateString = date != null
             ? '${date.day}/${date.month}/${date.year}'
             : 'Fecha inv.'; // Formato completo
-        final status =
-            data['status'] ??
-            'unknown'; // 'confirmed', 'completed', 'cancelled'
+        // --- Lógica para parsear el estado ---
+        final statusString = data['status'] as String? ?? 'scheduled';
+        final status = AppointmentStatus.values.firstWhere(
+          (e) => e.name == statusString,
+          orElse: () => AppointmentStatus.scheduled, // Fallback seguro
+        );
+        // --- Fin de la lógica de estado ---
+        final rawCenterId = data['centerId'] as String?;
+        final centerId = rawCenterId ?? _slugifyCenterName(data['centerName']);
+        final updatedAt = (data['updatedAt'] as Timestamp?)?.toDate();
 
         return HistoryItemEntity(
+          appointmentId: doc.id,
+          centerId: centerId,
           date: dateString,
           center: data['centerName'] ?? 'Centro desconocido',
           type: data['donationType'] ?? 'No especificado',
-          // Mapeamos el estado a si fue completada o no
-          wasCompleted: status == 'completed',
-          // Podríamos añadir el estado real si quisiéramos mostrar "Cancelada"
-          // status: status,
+          // Se pasa el estado parseado en lugar del booleano
+          status: status,
+          scheduledAt: date,
+          updatedAt: updatedAt,
         );
       }).toList();
     } catch (e) {
@@ -444,6 +772,32 @@ class FirebaseCentersRepository implements CentersRepository {
   }
 
   // --- Helper Functions (Ejemplos) ---
+  String _formatDateLabel(DateTime date) {
+    final weekday = _dayOfWeekToString(date.weekday);
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$weekday $day/$month';
+  }
+
+  void _validateBookingDate(DateTime date) {
+    final today = DateTime.now();
+    final normalizedToday = DateTime(today.year, today.month, today.day);
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    if (!normalizedDate.isAfter(normalizedToday)) {
+      throw Exception(
+        'Las donaciones deben agendarse con al menos 1 día de anticipación.',
+      );
+    }
+    if (normalizedDate.weekday == DateTime.sunday) {
+      throw Exception('Los turnos no están disponibles los domingos.');
+    }
+  }
+
+  String _slugifyCenterName(Object? rawCenter) {
+    final value = (rawCenter ?? 'centro_desconocido').toString();
+    return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+  }
+
   String _monthToString(int month) {
     const months = [
       'Ene',
@@ -467,6 +821,77 @@ class FirebaseCentersRepository implements CentersRepository {
     return days[day - 1];
   }
 
+  static const List<AchievementLevel> _levels = [
+    AchievementLevel(
+      level: 1,
+      name: 'Primer Héroe',
+      title: '🩸 Nivel 1 – Donante Inicial',
+      minDonations: 1,
+      reward: 'Badge + mensaje de bienvenida',
+      description:
+          'Tu primera donación puede salvar hasta 3 vidas. ¡Bienvenido a la comunidad BloodHero!',
+      badgeEmoji: '🩸',
+    ),
+    AchievementLevel(
+      level: 2,
+      name: 'Segundo Pulso',
+      title: '❤️ Nivel 2 – Donante Comprometido',
+      minDonations: 3,
+      reward: 'Insignia + contador visible',
+      description: 'Tu compromiso comienza a marcar la diferencia.',
+      badgeEmoji: '❤️',
+    ),
+    AchievementLevel(
+      level: 3,
+      name: 'Corazón Constante',
+      title: '💪 Nivel 3 – Donante Frecuente',
+      minDonations: 5,
+      reward: 'Fondo especial de perfil',
+      description:
+          'Gracias por donar de manera regular. ¡Sos ejemplo de constancia!',
+      badgeEmoji: '💪',
+    ),
+    AchievementLevel(
+      level: 4,
+      name: 'Río de Vida',
+      title: '🏅 Nivel 4 – Donante Avanzado',
+      minDonations: 10,
+      reward: 'Descuento o prioridad en eventos solidarios',
+      description: 'Tu constancia fluye como la vida misma.',
+      badgeEmoji: '🏅',
+    ),
+    AchievementLevel(
+      level: 5,
+      name: 'Guardian del Plasma',
+      title: '🕊️ Nivel 5 – Donante Solidario',
+      minDonations: 15,
+      reward: 'Badge dorada + reconocimiento en ranking local',
+      description:
+          'Sos parte esencial de cada historia que ayudás a escribir.',
+      badgeEmoji: '🕊️',
+    ),
+    AchievementLevel(
+      level: 6,
+      name: 'Embajador BloodHero',
+      title: '🌟 Nivel 6 – Donante Elite',
+      minDonations: 20,
+      reward: 'Certificado digital + mención en redes / leaderboard',
+      description:
+          'Inspirás a otros a salvar vidas. ¡Gracias por tu ejemplo!',
+      badgeEmoji: '🌟',
+    ),
+    AchievementLevel(
+      level: 7,
+      name: 'Corazón de Platino',
+      title: '💎 Nivel 7 – Donante Legendario',
+      minDonations: 30,
+      reward: 'Reconocimiento legendario en la comunidad BloodHero',
+      description:
+          'Tu legado salva vidas una y otra vez. ¡Gracias por tu compromiso legendario!',
+      badgeEmoji: '💎',
+    ),
+  ];
+
   // --- Método crucial que faltaba en FirebaseAuthRepository ---
   // Debería estar allí, pero lo ponemos aquí temporalmente para que compile
   // y para ilustrar cómo se guardan los datos del usuario en Firestore.
@@ -487,6 +912,13 @@ class FirebaseCentersRepository implements CentersRepository {
         'city': city,
         'ranking': 'Nuevo Donador', // Ranking inicial
         'createdAt': FieldValue.serverTimestamp(),
+        // --- COMENTARIO: Inicialización de estadísticas ---
+        // Se inicializan las estadísticas de donaciones y vidas ayudadas en 0
+        // al momento de crear el usuario. Esto es crucial para que los
+        // incrementos atómicos funcionen correctamente desde la primera donación.
+        'totalDonations': 0,
+        'livesHelped': 0,
+        // --- FIN DEL COMENTARIO ---
       });
     } catch (e) {
       throw Exception('Error al guardar datos del usuario en Firestore: $e');

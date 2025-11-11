@@ -53,4 +53,12 @@ class FakeAuthRepository implements AuthRepository {
   Future<void> updateUserProfile(Map<String, dynamic> data) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    throw UnimplementedError();
+  }
 }

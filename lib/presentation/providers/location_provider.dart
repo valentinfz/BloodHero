@@ -2,8 +2,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+/// Permite habilitar o deshabilitar el uso de la ubicación desde la UI.
+class LocationConsentNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+
+  void setConsent(bool allow) => state = allow;
+}
+
+final locationConsentProvider =
+    NotifierProvider<LocationConsentNotifier, bool>(LocationConsentNotifier.new);
+
 // Este provider expone la ubicación actual del usuario como un Stream
 final userLocationProvider = StreamProvider.autoDispose<LatLng?>((ref) async* {
+  final allowLocation = ref.watch(locationConsentProvider);
+  if (!allowLocation) {
+    yield null;
+    return;
+  }
+
   // Verificar servicios y permisos
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!serviceEnabled) {
@@ -22,10 +39,25 @@ final userLocationProvider = StreamProvider.autoDispose<LatLng?>((ref) async* {
 
   // Obtener posición inicial
   try {
-    final pos = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.best,
-    );
-    yield LatLng(pos.latitude, pos.longitude);
+    final lastKnown = await Geolocator.getLastKnownPosition();
+
+    Position? currentPosition;
+    try {
+      currentPosition = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+          distanceFilter: 25,
+        ),
+      );
+    } catch (_) {
+      currentPosition = lastKnown;
+    }
+
+    if (currentPosition != null) {
+      yield LatLng(currentPosition.latitude, currentPosition.longitude);
+    } else {
+      yield null;
+    }
   } catch (e) {
     yield null; // Error al obtener posición inicial
   }

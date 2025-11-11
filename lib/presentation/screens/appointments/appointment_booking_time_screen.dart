@@ -9,13 +9,21 @@ import 'appointment_booking_confirm_screen.dart';
 
 class AppointmentBookingTimeScreen extends ConsumerStatefulWidget {
   static const String name = 'appointment_booking_time_screen';
+  final String centerId;
   final String centerName;
   final DateTime date;
+  final String? appointmentId;
+  final String? donationType;
+  final String? initialTime;
 
   const AppointmentBookingTimeScreen({
     super.key,
+    required this.centerId,
     required this.centerName,
     required this.date,
+    this.appointmentId,
+    this.donationType,
+    this.initialTime,
   });
 
   @override
@@ -26,12 +34,28 @@ class AppointmentBookingTimeScreen extends ConsumerStatefulWidget {
 class AppointmentBookingTimeScreenState
     extends ConsumerState<AppointmentBookingTimeScreen> {
   // El estado de la seleccion del usuario se mantiene localmente
-  Set<String> selectedTimes = {};
+  late Set<String> selectedTimes;
+
+  @override
+  void initState() {
+    super.initState();
+    final normalizedInitialTime = _extractTime(widget.initialTime);
+    selectedTimes = {
+      if (normalizedInitialTime != null) normalizedInitialTime,
+    };
+  }
+
+  String? _extractTime(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final match = RegExp(r'(\d{1,2}:\d{2})').firstMatch(value);
+    return match?.group(0);
+  }
 
   @override
   Widget build(BuildContext context) {
     // Se crea el objeto para pasar al provider.family
     final params = AvailableTimesParams(
+      centerId: widget.centerId,
       centerName: widget.centerName,
       date: widget.date,
     );
@@ -77,9 +101,12 @@ class AppointmentBookingTimeScreenState
                   : () => context.pushNamed(
                       AppointmentBookingConfirmScreen.name,
                       extra: {
+                        'centerId': widget.centerId,
                         'center': widget.centerName,
                         'date': widget.date,
                         'time': selectedTimes.first,
+                        'donationType': widget.donationType ?? 'Sangre total',
+                        'appointmentId': widget.appointmentId,
                       },
                     ),
             ),

@@ -1,5 +1,3 @@
-import 'package:bloodhero/data/repositories/fake_auth_repository.dart';
-import 'package:bloodhero/data/repositories/fake_centers_repository.dart';
 import 'package:bloodhero/data/repositories/firebase_auth_repository.dart';
 import 'package:bloodhero/data/repositories/firebase_centers_repository.dart';
 import 'package:bloodhero/domain/repositories/auth_repository.dart';
@@ -12,6 +10,5 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 final centersRepositoryProvider = Provider<CentersRepository>((ref) {
-  return FakeCentersRepository(); //Fake
-  //return FirebaseCentersRepository(); //FireBase
+  return FirebaseCentersRepository();
 });

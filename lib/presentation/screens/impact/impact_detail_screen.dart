@@ -47,10 +47,23 @@ class ImpactDetailScreen extends ConsumerWidget {
                   child: FilledButton.icon(
                     icon: const Icon(Icons.share),
                     label: const Text('Compartir logro'),
-                    onPressed: () => Share.share(
-                      '¡Acabo de lograr "${details.title}" en BloodHero! Sumate y salvemos vidas juntos.',
-                      subject: 'Mi logro en BloodHero',
-                    ),
+                    onPressed: () {
+                      // onPressed: () => Share.share(
+                      //   '¡Acabo de lograr "${details.title}" en BloodHero! Sumate y salvemos vidas juntos.',
+                      //   subject: 'Mi logro en BloodHero',
+                      // ),
+                      // SharePlus.instance.share(
+                      //   '¡Acabo de lograr "${details.title}" en BloodHero! Sumate y salvemos vidas juntos.',
+                      //   subject: 'Mi logro en BloodHero',
+                      // );
+                      SharePlus.instance.share(
+                        ShareParams(
+                          text:
+                              '¡Acabo de lograr "${details.title}" en BloodHero! Sumate y salvemos vidas juntos.',
+                          subject: 'Mi logro en BloodHero',
+                        ),
+                      );
+                    },
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),
                     ),

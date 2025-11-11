@@ -14,7 +14,7 @@ dependencies:
   flutter_riverpod: ^3.0.3
   
   # Para la navegación entre pantallas
-  go_router: ^16.2.4
+  go_router: ^17.0.0
 
   # Para los puntos indicadores en el Onboarding
   smooth_page_indicator: ^1.1.0
@@ -23,19 +23,19 @@ dependencies:
   google_fonts: ^6.2.1
 
   #Mapa
-  flutter_map: ^7.0.2
+  flutter_map: ^8.2.2
   latlong2: ^0.9.1
-  geolocator: ^11.1.0
-  flutter_map_marker_cluster: ^1.3.6
+  geolocator: ^14.0.2
+  flutter_map_marker_cluster: ^8.2.2
   url_launcher: ^6.3.0
 
   # Compartir logros y contenido
   share_plus: ^12.0.1
 
   # Dependencias de Firebase:
-  firebase_core: ^3.1.1   # Necesario para inicializar Firebase
-  firebase_auth: ^5.1.1   # Para la autenticación (login, registro)
-  cloud_firestore: ^5.1.0 # Para la base de datos Firestore
+  firebase_core: ^4.2.1   # Necesario para inicializar Firebase
+  firebase_auth: ^6.1.2   # Para la autenticación (login, registro)
+  cloud_firestore: ^6.1.0 # Para la base de datos Firestore
 
   cupertino_icons: ^1.0.2
 

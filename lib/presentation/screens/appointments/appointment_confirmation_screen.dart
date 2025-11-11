@@ -8,12 +8,14 @@ class AppointmentConfirmationScreen extends StatelessWidget {
   final String center;
   final String date;
   final String time;
+  final bool isReschedule;
 
   const AppointmentConfirmationScreen({
     super.key,
     required this.center,
     required this.date,
     required this.time,
+    this.isReschedule = false,
   });
 
   @override
@@ -36,9 +38,14 @@ class AppointmentConfirmationScreen extends StatelessWidget {
                 child: const Icon(Icons.check, size: 64, color: Colors.green),
               ),
               const SizedBox(height: 24),
-              const Text(
-                '¡Listo! Tu turno está confirmado',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              Text(
+                isReschedule
+                    ? '¡Listo! Reprogramaste tu turno'
+                    : '¡Listo! Tu turno está confirmado',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -48,8 +55,10 @@ class AppointmentConfirmationScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Te enviamos un email con la confirmación. Podés ver tus turnos en la sección "Mis Citas".',
+              Text(
+                isReschedule
+                    ? 'Actualizamos tu turno y vas a ver el nuevo horario en la sección "Mis Citas".'
+                    : 'Te enviamos un email con la confirmación. Podés ver tus turnos en la sección "Mis Citas".',
                 textAlign: TextAlign.center,
               ),
               const Spacer(flex: 3),

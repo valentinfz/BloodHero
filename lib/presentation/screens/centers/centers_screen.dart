@@ -43,22 +43,15 @@ class _CenterScreenState extends ConsumerState<CenterScreen> {
     LatLng? userLatLng,
   ) {
     final list = centers.map((c) {
-      double? km;
-      if (userLatLng != null) {
-        km = _distance.as(
-          LengthUnit.Kilometer,
-          userLatLng,
-          LatLng(c.lat, c.lng),
-        );
+      if (userLatLng == null) {
+        return c;
       }
-      return CenterEntity(
-        name: c.name,
-        address: c.address,
-        lat: c.lat,
-        lng: c.lng,
-        image: c.image,
-        distance: km?.toStringAsFixed(1),
+      final km = _distance.as(
+        LengthUnit.Kilometer,
+        userLatLng,
+        LatLng(c.lat, c.lng),
       );
+      return c.copyWith(distance: km.toStringAsFixed(1));
     }).toList();
 
     list.sort((a, b) {
@@ -93,9 +86,11 @@ class _CenterScreenState extends ConsumerState<CenterScreen> {
     final query = Uri.encodeComponent('${c.name} ${c.address}');
     final uri = Uri.parse('https://www.google.com/search?q=$query');
 
-    if (!context.mounted) return;
+    // if (!context.mounted) return;
+    if (!mounted) return;
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
+    if (!mounted) return;
+    if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo abrir la búsqueda en Google')),
       );
@@ -242,14 +237,19 @@ class _CenterScreenState extends ConsumerState<CenterScreen> {
                         controller: scrollController,
                         padding: kScreenPadding,
                         itemCount: ordered.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: kCardSpacing),
+            // separatorBuilder: (_, __) =>
+            //     const SizedBox(height: kCardSpacing),
+            separatorBuilder: (context, _) =>
+              const SizedBox(height: kCardSpacing),
                         itemBuilder: (context, index) {
                           final center = ordered[index];
                           final isSel = _selectedIndex == index;
-                          final dist = center.distance == null
-                              ? '—'
-                              : '${center.distance} km';
+              final dist = center.distance;
+              final distLabel = dist == null
+                ? '—'
+                : dist.trim().endsWith('km')
+                  ? dist
+                  : '$dist km';
                           return InkWell(
                             borderRadius: BorderRadius.circular(12),
                             onTap: () {
@@ -263,7 +263,7 @@ class _CenterScreenState extends ConsumerState<CenterScreen> {
                               title: center.name + (isSel ? ' •' : ''),
                               body: [
                                 Text(center.address),
-                                Text('Distancia: $dist'),
+                                Text('Distancia: $distLabel'),
                               ],
                               footer: Wrap(
                                 spacing: 8,
