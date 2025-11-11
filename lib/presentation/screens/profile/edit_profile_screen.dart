@@ -124,7 +124,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Tipo de sangre',
                     ),
-                    initialValue: _selectedBloodType,
+                    // ignore: deprecated_member_use
+                    value: _selectedBloodType,
                     items: _bloodTypes
                         .map(
                           (type) => DropdownMenuItem(
@@ -136,7 +137,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     onChanged: isSubmitting
                         ? null
                         : (value) {
-                            _selectedBloodType = value;
+                            setState(() {
+                              _selectedBloodType = value;
+                            });
                           },
                     validator: (value) {
                       if (value == null || value.isEmpty) {

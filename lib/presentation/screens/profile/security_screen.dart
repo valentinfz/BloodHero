@@ -1,8 +1,10 @@
 import 'package:bloodhero/config/theme/layout_constants.dart';
 import 'package:bloodhero/presentation/providers/auth_provider.dart';
+import 'package:bloodhero/presentation/screens/auth/login_screen.dart';
 import 'package:bloodhero/presentation/widgets/shared/app_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class SecurityScreen extends ConsumerStatefulWidget {
   static const String name = 'security_screen';
@@ -42,8 +44,10 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-  final isLoading = authState is AuthInProgress &&
-    authState.action == AuthAction.changePassword;
+    final isLoading = authState is AuthInProgress &&
+        authState.action == AuthAction.changePassword;
+    final isDeleting = authState is AuthInProgress &&
+        authState.action == AuthAction.deleteAccount;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Seguridad')),
@@ -168,9 +172,14 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
             subtitle: const Text(
               'Podés solicitar la eliminación de todos tus datos',
             ),
-            onTap: () {
-              // TODO: Invocar AuthRepository.deleteUserAccount para marcar deletedAt sin borrar el documento.
-            },
+            trailing: isDeleting
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
+            onTap: isDeleting ? null : _confirmDeleteAccount,
           ),
         ],
       ),
@@ -188,6 +197,37 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
           currentPassword: _currentPasswordController.text.trim(),
           newPassword: _newPasswordController.text.trim(),
         );
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Eliminar cuenta'),
+          content: const Text(
+            'Esta acción eliminará permanentemente tu cuenta y no se puede deshacer. ¿Querés continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete == true) {
+      await ref.read(authProvider.notifier).deleteUserAccount();
+    }
   }
 
   void _handleAuthStateChanges(AuthState? previous, AuthState next) {
@@ -214,6 +254,26 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
         const SnackBar(content: Text('Tu contraseña fue actualizada.')),
       );
       ref.read(authProvider.notifier).resetState();
+      return;
+    }
+
+    if (next is AuthFailure && next.action == AuthAction.deleteAccount) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(next.message)),
+      );
+      ref.read(authProvider.notifier).resetState();
+      return;
+    }
+
+    if (previous is AuthInProgress &&
+        previous.action == AuthAction.deleteAccount &&
+        next is AuthCompleted &&
+        next.action == AuthAction.deleteAccount) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tu cuenta fue eliminada.')),
+      );
+      ref.read(authProvider.notifier).resetState();
+      context.goNamed(LoginScreen.name);
     }
   }
 }

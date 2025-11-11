@@ -25,9 +25,10 @@ abstract class AuthRepository {
   ///
   /// Implementaciones deben actualizar `deletedAt` con
   /// `FieldValue.serverTimestamp()` (si estaba en `null`) y registrar un nuevo
-  /// `updatedAt`. El documento no debe eliminarse físicamente.
+  /// `updatedAt`. El documento no debe eliminarse físicamente. Si la
+  /// implementación usa Firebase Auth, además debe eliminar (o desactivar)
+  /// la credencial del usuario autenticado para impedir nuevos accesos.
   Future<void> deleteUserAccount();
-
   /// Cambia la contraseña del usuario actualmente autenticado.
   Future<void> changePassword({
     required String currentPassword,

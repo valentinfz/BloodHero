@@ -1,6 +1,8 @@
+import 'package:bloodhero/presentation/providers/location_provider.dart';
 import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/alert_entity.dart';
 import '../../domain/entities/user_entity.dart';
@@ -27,11 +29,35 @@ final nearbyAlertsProvider = FutureProvider.autoDispose<List<AlertEntity>>((
   ref,
 ) async {
   final repository = ref.watch(centersRepositoryProvider);
+  final locationAsync = ref.watch(userLocationProvider);
   debugPrint("Provider: Obteniendo alertas cercanas...");
   try {
     final alerts = await repository.getNearbyAlerts();
-    debugPrint("Provider: Alertas obtenidas: ${alerts.length} alertas.");
-    return alerts;
+    final userLocation = locationAsync.asData?.value;
+    if (userLocation == null) {
+      debugPrint(
+        "Provider: Alertas obtenidas: ${alerts.length} (sin ubicación para calcular distancia)",
+      );
+      return alerts;
+    }
+
+    const distance = Distance();
+    final decorated = alerts.map((alert) {
+      if (alert.latitude == null || alert.longitude == null) {
+        return alert;
+      }
+      final meters = distance(
+        LatLng(userLocation.latitude, userLocation.longitude),
+        LatLng(alert.latitude!, alert.longitude!),
+      );
+      final distanceText = meters >= 1000
+          ? '${(meters / 1000).toStringAsFixed(meters < 10000 ? 1 : 0)} km'
+          : '${meters.round()} m';
+      return alert.copyWith(distance: distanceText);
+    }).toList();
+
+    debugPrint("Provider: Alertas obtenidas: ${decorated.length} alertas.");
+    return decorated;
   } catch (e) {
     debugPrint("Provider: ERROR al obtener alertas: $e");
     rethrow;

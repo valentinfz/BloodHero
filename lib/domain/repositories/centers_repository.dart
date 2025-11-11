@@ -24,6 +24,12 @@ abstract class CentersRepository {
     required DateTime date,
   });
 
+  Future<Set<DateTime>> getFullyBookedDays({
+    required String centerId,
+    required DateTime startDate,
+    required DateTime endDate,
+  });
+
   Future<AppointmentEntity> bookAppointment({
     required String centerId,
     required String centerName,

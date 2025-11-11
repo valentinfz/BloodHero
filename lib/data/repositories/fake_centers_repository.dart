@@ -15,6 +15,14 @@ import '../../domain/entities/history_item_entity.dart';
 import '../../domain/repositories/centers_repository.dart';
 
 class FakeCentersRepository implements CentersRepository {
+  static const List<String> _baseTimes = <String>[
+    '09:00',
+    '09:30',
+    '10:00',
+    '10:30',
+    '11:00',
+    '11:30',
+  ];
   // --- Lista Estática de Logros ---
   static const List<AchievementEntity> _achievements = [
     AchievementEntity(
@@ -183,7 +191,17 @@ class FakeCentersRepository implements CentersRepository {
     required DateTime date,
   }) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    return ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
+    return List<String>.from(_baseTimes);
+  }
+
+  @override
+  Future<Set<DateTime>> getFullyBookedDays({
+    required String centerId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    return <DateTime>{};
   }
 
   @override
@@ -297,26 +315,32 @@ class FakeCentersRepository implements CentersRepository {
     await Future.delayed(const Duration(milliseconds: 1200));
     return [
       AlertEntity(
+        id: 'alert_1',
         bloodType: 'O-',
         expiration: 'vence hoy',
         distance: '2 km',
         centerName: 'Hospital Central',
+        centerId: 'hospital_central',
         latitude: -34.6037,
         longitude: -58.3816,
       ),
       AlertEntity(
+        id: 'alert_2',
         bloodType: 'A+',
         expiration: 'vence en 2 días',
         distance: '5 km',
         centerName: 'Clínica del Norte',
+        centerId: 'clinica_del_norte',
         latitude: -34.5481,
         longitude: -58.4896,
       ),
       AlertEntity(
+        id: 'alert_3',
         bloodType: 'B-',
         expiration: 'vence en 3 días',
         distance: '8 km',
         centerName: 'Hospital Sur',
+        centerId: 'hospital_sur',
         latitude: -34.7206,
         longitude: -58.2620,
       ),

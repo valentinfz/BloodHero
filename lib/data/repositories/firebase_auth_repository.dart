@@ -134,9 +134,13 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<void> deleteUserAccount() async {
     if (_userId == null) throw Exception('Usuario no autenticado.');
 
-    final userRef = _firestore.collection('users').doc(_userId);
+    final userId = _userId!;
+    final userRef = _firestore.collection('users').doc(userId);
+    final user = _firebaseAuth.currentUser;
 
     try {
+      await _releaseUserBookedSlots(userId);
+
       await _firestore.runTransaction((transaction) async {
         final snapshot = await transaction.get(userRef);
         if (!snapshot.exists) {
@@ -149,10 +153,29 @@ class FirebaseAuthRepository implements AuthRepository {
         });
       });
 
+      if (user != null) {
+        await user.delete();
+      }
+
       await logout();
     } catch (e) {
       throw Exception('Error al eliminar la cuenta: $e');
     }
+  }
+
+  Future<void> _releaseUserBookedSlots(String userId) async {
+    final snapshot = await _firestore
+        .collectionGroup('bookedSlots')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
   }
 
   @override
@@ -173,6 +196,7 @@ class FirebaseAuthRepository implements AuthRepository {
 
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(newPassword);
+      await user.reload();
     } on FirebaseAuthException catch (e) {
       if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
         throw Exception('La contraseña actual no es correcta.');
