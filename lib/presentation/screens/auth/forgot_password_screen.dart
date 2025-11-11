@@ -28,11 +28,16 @@ class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     // Observamos el estado del provider para reaccionar a la UI
-    final authState = ref.watch(authProvider);
+  final authState = ref.watch(authProvider);
+  final isSubmitting = authState is AuthInProgress &&
+    authState.action == AuthAction.forgotPassword;
 
     // Escuchamos los cambios de estado para acciones únicas
     ref.listen(authProvider, (previous, next) {
-      if (previous is AuthLoading && next is AuthInitial) {
+      if (previous is AuthInProgress &&
+          previous.action == AuthAction.forgotPassword &&
+          next is AuthCompleted &&
+          next.action == AuthAction.forgotPassword) {
         if (!context.mounted) return; // Verificación de seguridad
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -40,12 +45,13 @@ class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             backgroundColor: Colors.green,
           ),
         );
+        ref.read(authProvider.notifier).resetState();
         // Regresamos a la pantalla de Login
         context.goNamed(LoginScreen.name);
       }
 
       // Error: Detectamos el estado de error y mostramos el mensaje
-      if (next is AuthError) {
+      if (next is AuthFailure && next.action == AuthAction.forgotPassword) {
         if (!context.mounted) return; // Verificación de seguridad
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -88,7 +94,7 @@ class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: kSectionSpacing),
 
-                if (authState is AuthLoading)
+                if (isSubmitting)
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(16.0),
@@ -99,6 +105,7 @@ class ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   AppButton.primary(
                     text: 'Enviar instrucciones',
                     onPressed: () {
+                      if (isSubmitting) return;
                       if (_formKey.currentState?.validate() ?? false) {
                         ref
                             .read(authProvider.notifier)

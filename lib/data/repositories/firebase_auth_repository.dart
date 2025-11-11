@@ -107,6 +107,7 @@ class FirebaseAuthRepository implements AuthRepository {
 
     try {
       final updateData = Map<String, dynamic>.from(data);
+      final user = _firebaseAuth.currentUser;
 
       // Los timestamps los controla el backend: evitamos sobrescribirlos manualmente.
       updateData.remove('updatedAt');
@@ -117,7 +118,13 @@ class FirebaseAuthRepository implements AuthRepository {
 
       updateData['updatedAt'] = FieldValue.serverTimestamp();
 
+      final nameValue = updateData['name'];
+      if (user != null && nameValue is String && nameValue.trim().isNotEmpty) {
+        await user.updateDisplayName(nameValue.trim());
+      }
+
       await _firestore.collection('users').doc(_userId).update(updateData);
+      await user?.reload();
     } catch (e) {
       throw Exception('Error al actualizar el perfil: $e');
     }

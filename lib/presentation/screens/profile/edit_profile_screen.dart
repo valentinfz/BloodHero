@@ -71,7 +71,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(userProfileProvider);
     final authState = ref.watch(authProvider);
-    final isSubmitting = authState is AuthLoading;
+  final isSubmitting = authState is AuthInProgress &&
+    authState.action == AuthAction.updateProfile;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Editar perfil')),
@@ -175,18 +176,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   void _onAuthStateChange(AuthState? previous, AuthState next) {
     if (!mounted) return;
-    if (next is AuthError) {
+    if (next is AuthFailure && next.action == AuthAction.updateProfile) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(next.message)),
       );
+      ref.read(authProvider.notifier).resetState();
       return;
     }
-    if (previous is AuthLoading && next is AuthInitial) {
+    if (previous is AuthInProgress &&
+        previous.action == AuthAction.updateProfile &&
+        next is AuthCompleted &&
+        next.action == AuthAction.updateProfile) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Perfil actualizado correctamente.')),
       );
       ref.invalidate(userProfileProvider);
       Navigator.of(context).pop();
+      ref.read(authProvider.notifier).resetState();
     }
   }
 }

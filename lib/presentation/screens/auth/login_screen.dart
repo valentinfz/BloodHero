@@ -20,6 +20,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
 
   @override
@@ -33,12 +34,15 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final authState = ref.watch(authProvider);
+    final isLoading =
+        authState is AuthInProgress && authState.action == AuthAction.login;
 
     ref.listen(authProvider, (previous, next) {
-      if (next is AuthSuccess) {
+      if (next is AuthCompleted && next.action == AuthAction.login) {
+        ref.read(authProvider.notifier).resetState();
         context.goNamed(HomeScreen.name);
       }
-      if (next is AuthError) {
+      if (next is AuthFailure && next.action == AuthAction.login) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${next.message}'),
@@ -54,73 +58,102 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
         child: SingleChildScrollView(
           child: Padding(
             padding: kScreenPadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 50),
-                Text('Iniciar sesión', style: textTheme.headlineMedium),
-                const SizedBox(height: kSectionSpacing),
-                CustomTextFormField(
-                  labelText: 'Email',
-                  controller: _emailController,
-                ),
-                const SizedBox(height: kCardSpacing),
-                CustomTextFormField(
-                  labelText: 'Contraseña',
-                  obscureText: _obscurePassword,
-                  controller: _passwordController,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 50),
+                  Text('Iniciar sesión', style: textTheme.headlineMedium),
+                  const SizedBox(height: kSectionSpacing),
+                  CustomTextFormField(
+                    labelText: 'Email',
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      final trimmed = value?.trim() ?? '';
+                      if (trimmed.isEmpty) {
+                        return 'Ingresá tu email';
+                      }
+                      if (!trimmed.contains('@')) {
+                        return 'El email no es válido';
+                      }
+                      return null;
                     },
                   ),
-                ),
-                const SizedBox(height: kCardSpacing),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () =>
-                        context.pushNamed(ForgotPasswordScreen.name),
-                    child: const Text('¿Olvidaste tu contraseña?'),
-                  ),
-                ),
-                const SizedBox(height: kSmallSpacing),
-                if (authState is AuthLoading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else
-                  AppButton.primary(
-                    text: 'Ingresar',
-                    onPressed: () {
-                      ref
-                          .read(authProvider.notifier)
-                          .login(
-                            _emailController.text,
-                            _passwordController.text,
-                          );
+                  const SizedBox(height: kCardSpacing),
+                  CustomTextFormField(
+                    labelText: 'Contraseña',
+                    obscureText: _obscurePassword,
+                    controller: _passwordController,
+                    validator: (value) {
+                      final trimmed = value?.trim() ?? '';
+                      if (trimmed.isEmpty) {
+                        return 'Ingresá tu contraseña';
+                      }
+                      if (trimmed.length < 6) {
+                        return 'Debe tener al menos 6 caracteres';
+                      }
+                      return null;
                     },
-                  ),
-                const SizedBox(height: kCardSpacing),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('¿No tienes una cuenta?'),
-                    TextButton(
-                      onPressed: () => context.goNamed(RegisterScreen.name),
-                      child: const Text('Regístrate'),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: kCardSpacing),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () =>
+                          context.pushNamed(ForgotPasswordScreen.name),
+                      child: const Text('¿Olvidaste tu contraseña?'),
+                    ),
+                  ),
+                  const SizedBox(height: kSmallSpacing),
+                  if (isLoading)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else
+                    AppButton.primary(
+                      text: 'Ingresar',
+                      onPressed: () {
+                        if (isLoading) return;
+                        if (!(_formKey.currentState?.validate() ?? false)) {
+                          return;
+                        }
+                        FocusScope.of(context).unfocus();
+                        ref.read(authProvider.notifier).login(
+                              _emailController.text.trim(),
+                              _passwordController.text.trim(),
+                            );
+                      },
+                    ),
+                  const SizedBox(height: kCardSpacing),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('¿No tienes una cuenta?'),
+                      TextButton(
+                        onPressed: () => context.goNamed(RegisterScreen.name),
+                        child: const Text('Regístrate'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

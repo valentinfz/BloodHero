@@ -58,15 +58,18 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     // Usamos 'watch' para que la UI se reconstruya (ej. para mostrar/ocultar el spinner)
     final authState = ref.watch(authProvider);
+    final isSubmitting =
+        authState is AuthInProgress && authState.action == AuthAction.register;
 
     // Usamos 'listen' para acciones que solo deben ocurrir UNA VEZ por cambio de estado
     // (como navegar o mostrar un SnackBar)
     ref.listen(authProvider, (previous, next) {
-      if (next is AuthSuccess) {
+      if (next is AuthCompleted && next.action == AuthAction.register) {
+        ref.read(authProvider.notifier).resetState();
         // Al registrarse, vamos a la pantalla Home
         context.goNamed(HomeScreen.name);
       }
-      if (next is AuthError) {
+      if (next is AuthFailure && next.action == AuthAction.register) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             // Mostramos el mensaje de error real
@@ -179,12 +182,13 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   const SizedBox(height: kItemSpacing),
 
-                  if (authState is AuthLoading)
+                  if (isSubmitting)
                     const Center(child: CircularProgressIndicator())
                   else
                     AppButton.primary(
                       text: 'Crear cuenta',
                       onPressed: () {
+                        if (isSubmitting) return;
                         if (_formKey.currentState?.validate() ?? false) {
                           ref
                               .read(authProvider.notifier)

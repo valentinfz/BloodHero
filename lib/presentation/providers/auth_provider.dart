@@ -1,73 +1,78 @@
 import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+enum AuthAction {
+  login,
+  register,
+  forgotPassword,
+  updateProfile,
+  deleteAccount,
+  changePassword,
+}
+
 abstract class AuthState {
   const AuthState();
 }
 
-class AuthInitial extends AuthState {
-  const AuthInitial();
+class AuthIdle extends AuthState {
+  const AuthIdle();
 }
 
-class AuthLoading extends AuthState {
-  const AuthLoading();
+class AuthInProgress extends AuthState {
+  final AuthAction action;
+  const AuthInProgress(this.action);
 }
 
-class AuthSuccess extends AuthState {
-  const AuthSuccess();
+class AuthCompleted extends AuthState {
+  final AuthAction action;
+  const AuthCompleted(this.action);
 }
 
-class AuthError extends AuthState {
+class AuthFailure extends AuthState {
+  final AuthAction action;
   final String message;
-  const AuthError(this.message);
+  const AuthFailure({required this.action, required this.message});
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is AuthError && other.message == message;
+    return other is AuthFailure &&
+        other.action == action &&
+        other.message == message;
   }
 
   @override
-  int get hashCode => message.hashCode;
+  int get hashCode => Object.hash(action, message);
 }
 
-// El Notifier:
 class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
-    return const AuthInitial();
+    return const AuthIdle();
   }
 
-  // Helper para operaciones que SÍ inician sesión (login, register)
-  Future<bool> _runLoginOperation(Future<void> Function() operation) async {
-    state = const AuthLoading();
+  Future<void> _runOperation({
+    required AuthAction action,
+    required Future<void> Function() operation,
+  }) async {
+    state = AuthInProgress(action);
     try {
       await operation();
-      state = const AuthSuccess();
-      return true;
+      state = AuthCompleted(action);
     } catch (e) {
-      state = AuthError(e.toString().replaceFirst("Exception: ", ""));
-      return false;
-    }
-  }
-
-  // Helper para operaciones que NO inician sesión (forgot password, update, delete)
-  Future<bool> _runSideOperation(Future<void> Function() operation) async {
-    state = const AuthLoading();
-    try {
-      await operation();
-      state = const AuthInitial();
-      return true;
-    } catch (e) {
-      state = AuthError(e.toString().replaceFirst("Exception: ", ""));
-      return false;
+      state = AuthFailure(
+        action: action,
+        message: e.toString().replaceFirst('Exception: ', ''),
+      );
     }
   }
 
   Future<void> login(String email, String password) async {
-    await _runLoginOperation(() {
-      return ref.read(authRepositoryProvider).login(email, password);
-    });
+    await _runOperation(
+      action: AuthAction.login,
+      operation: () =>
+          ref.read(authRepositoryProvider).login(email, password),
+    );
   }
 
   Future<void> register({
@@ -78,70 +83,67 @@ class AuthNotifier extends Notifier<AuthState> {
     required String bloodType,
     required String city,
   }) async {
-    await _runLoginOperation(() {
-      return ref
-          .read(authRepositoryProvider)
-          .register(
+    await _runOperation(
+      action: AuthAction.register,
+      operation: () => ref.read(authRepositoryProvider).register(
             name: name,
             email: email,
             password: password,
             phone: phone,
             bloodType: bloodType,
             city: city,
-          );
-    });
+          ),
+    );
   }
 
   Future<void> forgotPassword(String email) async {
-    await _runSideOperation(() {
-      return ref.read(authRepositoryProvider).forgotPassword(email);
-    });
+    await _runOperation(
+      action: AuthAction.forgotPassword,
+      operation: () =>
+          ref.read(authRepositoryProvider).forgotPassword(email),
+    );
   }
 
   Future<void> logout() async {
     await ref.read(authRepositoryProvider).logout();
-    // NOTA: Podrías querer que el logout también cambie el estado
-    // state = const AuthInitial();
   }
 
-  /// Actualiza el perfil de usuario (ej. desde EditProfileScreen)
-  /// Usa _runSideOperation para mostrar feedback (loading/error) sin desloguear.
   Future<void> updateUserProfile(Map<String, dynamic> data) async {
-    await _runSideOperation(() {
-      return ref.read(authRepositoryProvider).updateUserProfile(data);
-    });
+    await _runOperation(
+      action: AuthAction.updateProfile,
+      operation: () =>
+          ref.read(authRepositoryProvider).updateUserProfile(data),
+    );
   }
 
-  /// Borra la cuenta del usuario (ej. desde SecurityScreen)
-  /// Usa _runSideOperation para mostrar feedback y luego desloguear.
   Future<void> deleteUserAccount() async {
-    await _runSideOperation(() {
-      return ref.read(authRepositoryProvider).deleteUserAccount();
-    });
-    // Adicionalmente, reseteamos el estado a Initial por si acaso.
-    state = const AuthInitial();
+    await _runOperation(
+      action: AuthAction.deleteAccount,
+      operation: () =>
+          ref.read(authRepositoryProvider).deleteUserAccount(),
+    );
   }
 
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
-    await _runSideOperation(() {
-      return ref
+    await _runOperation(
+      action: AuthAction.changePassword,
+      operation: () => ref
           .read(authRepositoryProvider)
           .changePassword(
             currentPassword: currentPassword,
             newPassword: newPassword,
-          );
-    });
+          ),
+    );
   }
 
   void resetState() {
-    state = const AuthInitial();
+    state = const AuthIdle();
   }
 }
 
-// El Provider principal que la UI consumirá
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
   return AuthNotifier();
 });

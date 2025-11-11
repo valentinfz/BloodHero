@@ -42,7 +42,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final isLoading = authState is AuthLoading;
+  final isLoading = authState is AuthInProgress &&
+    authState.action == AuthAction.changePassword;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Seguridad')),
@@ -192,14 +193,18 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   void _handleAuthStateChanges(AuthState? previous, AuthState next) {
     if (!mounted) return;
 
-    if (next is AuthError) {
+    if (next is AuthFailure && next.action == AuthAction.changePassword) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(next.message)),
       );
+      ref.read(authProvider.notifier).resetState();
       return;
     }
 
-    if (previous is AuthLoading && next is AuthInitial) {
+    if (previous is AuthInProgress &&
+        previous.action == AuthAction.changePassword &&
+        next is AuthCompleted &&
+        next.action == AuthAction.changePassword) {
       _formKey.currentState?.reset();
       _currentPasswordController.clear();
       _newPasswordController.clear();
@@ -208,6 +213,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tu contraseña fue actualizada.')),
       );
+      ref.read(authProvider.notifier).resetState();
     }
   }
 }
