@@ -70,8 +70,7 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> login(String email, String password) async {
     await _runOperation(
       action: AuthAction.login,
-      operation: () =>
-          ref.read(authRepositoryProvider).login(email, password),
+      operation: () => ref.read(authRepositoryProvider).login(email, password),
     );
   }
 
@@ -85,7 +84,9 @@ class AuthNotifier extends Notifier<AuthState> {
   }) async {
     await _runOperation(
       action: AuthAction.register,
-      operation: () => ref.read(authRepositoryProvider).register(
+      operation: () => ref
+          .read(authRepositoryProvider)
+          .register(
             name: name,
             email: email,
             password: password,
@@ -99,28 +100,28 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> forgotPassword(String email) async {
     await _runOperation(
       action: AuthAction.forgotPassword,
-      operation: () =>
-          ref.read(authRepositoryProvider).forgotPassword(email),
+      operation: () => ref.read(authRepositoryProvider).forgotPassword(email),
     );
   }
 
   Future<void> logout() async {
+    // El logout no necesita 'runOperation'
     await ref.read(authRepositoryProvider).logout();
   }
 
   Future<void> updateUserProfile(Map<String, dynamic> data) async {
     await _runOperation(
       action: AuthAction.updateProfile,
-      operation: () =>
-          ref.read(authRepositoryProvider).updateUserProfile(data),
+      // CAMBIO: Apunta a userRepositoryProvider
+      operation: () => ref.read(userRepositoryProvider).updateUserProfile(data),
     );
   }
 
   Future<void> deleteUserAccount() async {
     await _runOperation(
       action: AuthAction.deleteAccount,
-      operation: () =>
-          ref.read(authRepositoryProvider).deleteUserAccount(),
+      // CAMBIO: Apunta a userRepositoryProvider
+      operation: () => ref.read(userRepositoryProvider).deleteUserAccount(),
     );
   }
 

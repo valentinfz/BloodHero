@@ -1,3 +1,5 @@
+// --- Métodos para Autenticación ---
+
 abstract class AuthRepository {
   Future<void> login(String email, String password);
 
@@ -14,21 +16,6 @@ abstract class AuthRepository {
 
   Future<void> logout();
 
-  /// Actualiza los datos básicos del usuario.
-  ///
-  /// Implementaciones deben:
-  /// - Ignorar/tomar como no válidos los campos `createdAt` y `deletedAt`.
-  /// - Registrar siempre un nuevo `updatedAt` con `FieldValue.serverTimestamp()`.
-  Future<void> updateUserProfile(Map<String, dynamic> data);
-
-  /// Marca la cuenta como eliminada sin borrar el documento en Firestore.
-  ///
-  /// Implementaciones deben actualizar `deletedAt` con
-  /// `FieldValue.serverTimestamp()` (si estaba en `null`) y registrar un nuevo
-  /// `updatedAt`. El documento no debe eliminarse físicamente. Si la
-  /// implementación usa Firebase Auth, además debe eliminar (o desactivar)
-  /// la credencial del usuario autenticado para impedir nuevos accesos.
-  Future<void> deleteUserAccount();
   /// Cambia la contraseña del usuario actualmente autenticado.
   Future<void> changePassword({
     required String currentPassword,

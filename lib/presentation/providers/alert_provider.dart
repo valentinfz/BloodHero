@@ -5,6 +5,6 @@ import '../../domain/entities/alert_detail_entity.dart';
 // Provider.family para obtener los detalles de UNA alerta específica
 final alertDetailProvider = FutureProvider.autoDispose
     .family<AlertDetailEntity, String>((ref, identifier) {
-      final repository = ref.watch(centersRepositoryProvider);
+      final repository = ref.watch(alertsRepositoryProvider);
       return repository.getAlertDetails(identifier);
     });

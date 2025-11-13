@@ -6,9 +6,6 @@ class FirebaseAuthRepository implements AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Helper para obtener el UID del usuario actual (o null si no está logueado)
-  String? get _userId => _firebaseAuth.currentUser?.uid;
-
   @override
   Future<void> login(String email, String password) async {
     try {
@@ -17,7 +14,6 @@ class FirebaseAuthRepository implements AuthRepository {
         password: password,
       );
     } on FirebaseAuthException catch (e) {
-      // Mapeo de errores comunes
       if (e.code == 'user-not-found' ||
           e.code == 'wrong-password' ||
           e.code == 'invalid-credential') {
@@ -41,6 +37,7 @@ class FirebaseAuthRepository implements AuthRepository {
     required String city,
   }) async {
     try {
+      // 1. Crear el usuario en Firebase Auth
       UserCredential userCredential = await _firebaseAuth
           .createUserWithEmailAndPassword(email: email, password: password);
 
@@ -49,24 +46,18 @@ class FirebaseAuthRepository implements AuthRepository {
         throw Exception('No se pudo obtener el ID del usuario creado.');
       }
 
-      final serverTimestamp = FieldValue.serverTimestamp();
+      // 2. Guardar los datos del usuario en Firestore
+      // (Esta lógica fue movida desde el antiguo firebase_centers_repository)
+      await _saveUserDataToFirestore(
+        userId: userId,
+        name: name,
+        email: email,
+        phone: phone,
+        bloodType: bloodType,
+        city: city,
+      );
 
-      await _firestore.collection('users').doc(userId).set({
-        'id': userId,
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'bloodType': bloodType,
-        'city': city,
-        'ranking': 'Nuevo Donador', // Asignamos un ranking inicial
-        'createdAt': serverTimestamp, // Fecha de creación
-        'updatedAt': serverTimestamp, // Fecha de actualización (inicial)
-        'deletedAt': null, // null para borrado lógico
-        // --- COMENTARIO: Inicializamos las métricas para evitar valores hardcodeados ---
-        'totalDonations': 0,
-        'livesHelped': 0,
-      });
-
+      // 3. (Opcional) Actualizar el display name en Auth
       await userCredential.user?.updateDisplayName(name);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
@@ -79,6 +70,34 @@ class FirebaseAuthRepository implements AuthRepository {
       throw Exception('Error de registro: ${e.message}');
     } catch (e) {
       throw Exception('Error desconocido al registrar: $e');
+    }
+  }
+
+  /// Método privado para guardar datos en Firestore durante el registro
+  Future<void> _saveUserDataToFirestore({
+    required String userId,
+    required String name,
+    required String phone,
+    required String bloodType,
+    required String city,
+    required String email,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(userId).set({
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'bloodType': bloodType,
+        'city': city,
+        'ranking': 'Nuevo Donador', // Ranking inicial
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'deletedAt': null,
+        'totalDonations': 0,
+        'livesHelped': 0,
+      });
+    } catch (e) {
+      throw Exception('Error al guardar datos del usuario en Firestore: $e');
     }
   }
 
@@ -99,83 +118,6 @@ class FirebaseAuthRepository implements AuthRepository {
   @override
   Future<void> logout() async {
     await _firebaseAuth.signOut();
-  }
-
-  @override
-  Future<void> updateUserProfile(Map<String, dynamic> data) async {
-    if (_userId == null) throw Exception('Usuario no autenticado.');
-
-    try {
-      final updateData = Map<String, dynamic>.from(data);
-      final user = _firebaseAuth.currentUser;
-
-      // Los timestamps los controla el backend: evitamos sobrescribirlos manualmente.
-      updateData.remove('updatedAt');
-      updateData.remove('id');
-      updateData.remove('createdAt');
-      updateData.remove('deletedAt');
-      updateData.remove('email');
-
-      updateData['updatedAt'] = FieldValue.serverTimestamp();
-
-      final nameValue = updateData['name'];
-      if (user != null && nameValue is String && nameValue.trim().isNotEmpty) {
-        await user.updateDisplayName(nameValue.trim());
-      }
-
-      await _firestore.collection('users').doc(_userId).update(updateData);
-      await user?.reload();
-    } catch (e) {
-      throw Exception('Error al actualizar el perfil: $e');
-    }
-  }
-
-  @override
-  Future<void> deleteUserAccount() async {
-    if (_userId == null) throw Exception('Usuario no autenticado.');
-
-    final userId = _userId!;
-    final userRef = _firestore.collection('users').doc(userId);
-    final user = _firebaseAuth.currentUser;
-
-    try {
-      await _releaseUserBookedSlots(userId);
-
-      await _firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(userRef);
-        if (!snapshot.exists) {
-          throw Exception('Perfil de usuario no encontrado.');
-        }
-
-        transaction.update(userRef, {
-          'deletedAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      });
-
-      if (user != null) {
-        await user.delete();
-      }
-
-      await logout();
-    } catch (e) {
-      throw Exception('Error al eliminar la cuenta: $e');
-    }
-  }
-
-  Future<void> _releaseUserBookedSlots(String userId) async {
-    final snapshot = await _firestore
-        .collectionGroup('bookedSlots')
-        .where('userId', isEqualTo: userId)
-        .get();
-
-    if (snapshot.docs.isEmpty) return;
-
-    final batch = _firestore.batch();
-    for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
-    }
-    await batch.commit();
   }
 
   @override

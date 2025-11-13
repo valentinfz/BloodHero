@@ -33,7 +33,9 @@ class CitasScreen extends ConsumerWidget {
           ),
           data: (appointments) {
             if (appointments.isEmpty) {
-              return const Center(child: Text('Aún no tienes citas agendadas.'));
+              return const Center(
+                child: Text('Aún no tienes citas agendadas.'),
+              );
             }
             return ListView.separated(
               padding: kScreenPadding,
@@ -83,10 +85,7 @@ class CitasScreen extends ConsumerWidget {
                           action,
                         ),
                         itemBuilder: (context) => const [
-                          PopupMenuItem(
-                            value: _AppointmentMenuAction.view,
-                            child: Text('Ver detalle'),
-                          ),
+                          // Se eliminó el PopupMenuItem para 'Ver detalle'
                           PopupMenuItem(
                             value: _AppointmentMenuAction.reschedule,
                             child: Text('Reprogramar'),
@@ -100,6 +99,7 @@ class CitasScreen extends ConsumerWidget {
                       const Icon(Icons.chevron_right),
                     ],
                   ),
+                  // El onTap principal sigue llevando a los detalles
                   onTap: () => context.pushNamed(
                     AppointmentDetailScreen.name,
                     extra: appointment.id,
@@ -118,7 +118,8 @@ class CitasScreen extends ConsumerWidget {
   }
 }
 
-enum _AppointmentMenuAction { view, reschedule, cancel }
+// Se eliminó 'view' de la enumeración
+enum _AppointmentMenuAction { reschedule, cancel }
 
 void _handleMenuAction(
   BuildContext context,
@@ -127,12 +128,7 @@ void _handleMenuAction(
   _AppointmentMenuAction action,
 ) {
   switch (action) {
-    case _AppointmentMenuAction.view:
-      context.pushNamed(
-        AppointmentDetailScreen.name,
-        extra: appointment.id,
-      );
-      return;
+    // Se eliminó el case para 'view'
     case _AppointmentMenuAction.reschedule:
       _startReschedule(context, appointment);
       return;
@@ -145,7 +141,9 @@ void _handleMenuAction(
 void _startReschedule(BuildContext context, AppointmentEntity appointment) {
   if (appointment.scheduledAt == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No pudimos cargar la fecha actual del turno.')),
+      const SnackBar(
+        content: Text('No pudimos cargar la fecha actual del turno.'),
+      ),
     );
     return;
   }

@@ -4,9 +4,9 @@ import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/appointment_detail_entity.dart';
 import '../../domain/entities/appointment_entity.dart';
+import '../../domain/repositories/appointment_repository.dart';
 
 /// Estado para el notifier de citas.
-///
 /// [appointments] es la lista de citas obtenidas del repositorio.
 /// [isLoading] indica si se está realizando una operación (cargar, cancelar, etc.).
 /// [error] contiene un mensaje de error si una operación falla.
@@ -35,45 +35,36 @@ class AppointmentsState {
 }
 
 /// Notifier para gestionar las citas del usuario.
-///
 /// Expone métodos para cargar, cancelar y registrar el resultado de las citas,
-/// interactuando con el `CentersRepository`.
+/// interactuando con el `AppointmentRepository`.
 class AppointmentsNotifier extends Notifier<AppointmentsState> {
+  // Helper para obtener el repositorio
+  AppointmentRepository get _repository =>
+      ref.read(appointmentRepositoryProvider);
+
   @override
   AppointmentsState build() {
     // Estado inicial y disparo de carga asíncrona.
-    // No podemos hacer await aquí, así que lanzamos la carga en microtask.
     Future.microtask(loadAppointments);
     return AppointmentsState();
   }
 
   /// Carga la lista de citas del usuario desde el repositorio.
   Future<void> loadAppointments() async {
-    // Pone el estado en 'cargando'.
     state = state.copyWith(appointments: const AsyncValue.loading());
-
     try {
-      // Obtiene el repositorio desde el provider.
-  final repository = ref.read(centersRepositoryProvider);
-      // Llama al método del repositorio para obtener las citas.
-      final appointments = await repository.getAppointments();
-      // Actualiza el estado con las citas obtenidas.
+      final appointments = await _repository.getAppointments();
       state = state.copyWith(appointments: AsyncValue.data(appointments));
     } catch (e, stack) {
-      // En caso de error, actualiza el estado con el error.
       state = state.copyWith(appointments: AsyncValue.error(e, stack));
     }
   }
 
   /// Cancela una cita específica.
-  ///
-  /// [appointmentId] es el ID de la cita a cancelar.
   Future<bool> cancelAppointment(String appointmentId) async {
     state = state.copyWith(isActing: true, actionError: null);
     try {
-  final repository = ref.read(centersRepositoryProvider);
-      // Llama al método del repositorio para cancelar la cita.
-      await repository.cancelAppointment(appointmentId: appointmentId);
+      await _repository.cancelAppointment(appointmentId: appointmentId);
       // Vuelve a cargar la lista de citas para reflejar el cambio de estado.
       await loadAppointments();
       ref.invalidate(nextAppointmentProvider);
@@ -89,11 +80,6 @@ class AppointmentsNotifier extends Notifier<AppointmentsState> {
   }
 
   /// Registra el resultado de una donación.
-  ///
-  /// [appointmentId] es el ID de la cita.
-  /// [wasCompleted] indica si la donación se realizó con éxito.
-  /// [notes] son notas opcionales sobre la donación.
-  /// Devuelve `true` si la operación fue exitosa.
   Future<bool> logDonation(
     String appointmentId, {
     required bool wasCompleted,
@@ -101,22 +87,16 @@ class AppointmentsNotifier extends Notifier<AppointmentsState> {
   }) async {
     state = state.copyWith(isActing: true, actionError: null);
     try {
-  final repository = ref.read(centersRepositoryProvider);
-      // Llama al método del repositorio para registrar el resultado.
-      await repository.logDonation(
+      await _repository.logDonation(
         appointmentId: appointmentId,
         wasCompleted: wasCompleted,
         notes: notes,
       );
 
-      // --- COMENTARIO: Refrescar ambos notifiers ---
-      // Después de registrar una donación, se refrescan tanto la lista de
-      // citas (para que la cita completada cambie de estado) como las
-      // estadísticas de impacto (para que el contador de donaciones aumente).
+      // Refrescamos los providers afectados
       await loadAppointments();
-  ref.read(impactProvider.notifier).loadImpactStats();
+      ref.invalidate(impactProvider);
       ref.invalidate(nextAppointmentProvider);
-      // --- FIN DEL COMENTARIO ---
 
       state = state.copyWith(isActing: false);
       return true; // Indica éxito
@@ -131,23 +111,17 @@ class AppointmentsNotifier extends Notifier<AppointmentsState> {
 }
 
 /// Provider que expone el `AppointmentsNotifier` a la UI.
-///
-/// La UI observará este provider para reaccionar a los cambios de estado
-/// (lista de citas, carga, errores) y llamará a sus métodos para
-/// ejecutar acciones.
 final appointmentsProvider =
     NotifierProvider<AppointmentsNotifier, AppointmentsState>(() {
-  return AppointmentsNotifier();
-});
+      return AppointmentsNotifier();
+    });
 
 // Provider.family para obtener los detalles de UNA cita específica por su ID
 final appointmentDetailProvider = FutureProvider.autoDispose
     .family<AppointmentDetailEntity, String>((ref, appointmentId) {
-      final repository = ref.watch(centersRepositoryProvider);
+      final repository = ref.watch(appointmentRepositoryProvider);
       return repository.getAppointmentDetails(appointmentId);
     });
-
-//PROVIDERS PARA EL FLUJO DE AGENDAR CITA:
 
 // Clase auxiliar para pasar múltiples parámetros al provider.family
 class AvailableTimesParams {
@@ -177,7 +151,7 @@ class AvailableTimesParams {
 // Provider.family para obtener los horarios disponibles
 final availableTimesProvider = FutureProvider.autoDispose
     .family<List<String>, AvailableTimesParams>((ref, params) {
-      final repository = ref.watch(centersRepositoryProvider);
+      final repository = ref.watch(appointmentRepositoryProvider);
       return repository.getAvailableTimes(
         centerId: params.centerId,
         date: params.date,
@@ -189,6 +163,9 @@ enum BookingState { initial, loading, success, error }
 
 // Notifier para manejar la lógica de agendar una cita
 class AppointmentBookingNotifier extends Notifier<BookingState> {
+  AppointmentRepository get _repository =>
+      ref.read(appointmentRepositoryProvider);
+
   @override
   BookingState build() => BookingState.initial;
 
@@ -202,9 +179,9 @@ class AppointmentBookingNotifier extends Notifier<BookingState> {
   }) async {
     state = BookingState.loading;
     try {
-      final repository = ref.read(centersRepositoryProvider);
       if (appointmentId != null) {
-        await repository.rescheduleAppointment(
+        // Lógica de Reprogramación
+        await _repository.rescheduleAppointment(
           appointmentId: appointmentId,
           centerId: centerId,
           centerName: centerName,
@@ -213,7 +190,8 @@ class AppointmentBookingNotifier extends Notifier<BookingState> {
           donationType: donationType,
         );
       } else {
-        await repository.bookAppointment(
+        // Lógica de Agendado nuevo
+        await _repository.bookAppointment(
           centerId: centerId,
           centerName: centerName,
           date: date,
@@ -221,7 +199,8 @@ class AppointmentBookingNotifier extends Notifier<BookingState> {
           donationType: donationType,
         );
       }
-      await ref.read(appointmentsProvider.notifier).loadAppointments();
+      // Invalidamos providers para que se actualice la UI
+      ref.invalidate(appointmentsProvider);
       ref.invalidate(nextAppointmentProvider);
       state = BookingState.success;
     } catch (e) {
@@ -238,4 +217,49 @@ class AppointmentBookingNotifier extends Notifier<BookingState> {
 final appointmentBookingProvider =
     NotifierProvider<AppointmentBookingNotifier, BookingState>(() {
       return AppointmentBookingNotifier();
+    });
+
+/// Parámetros para el provider de días ocupados.
+class BookedDaysParams {
+  final String centerId;
+  final DateTime startDate;
+  final DateTime endDate;
+
+  BookedDaysParams({
+    required this.centerId,
+    required this.startDate,
+    required this.endDate,
+  });
+
+  // Sobrescribimos == y hashCode para que el provider.family
+  // sepa cuándo los parámetros han cambiado realmente.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BookedDaysParams &&
+          runtimeType == other.runtimeType &&
+          centerId == other.centerId &&
+          startDate == other.startDate &&
+          endDate == other.endDate;
+
+  @override
+  int get hashCode => centerId.hashCode ^ startDate.hashCode ^ endDate.hashCode;
+}
+
+/// Provider que obtiene los días completamente ocupados para un centro
+/// en un rango de fechas específico.
+/// La UI "observará" este provider. Riverpod manejará automáticamente
+/// los estados de carga, error y datos.
+final fullyBookedDaysProvider = FutureProvider.autoDispose
+    .family<Set<DateTime>, BookedDaysParams>((ref, params) {
+      // Obtiene el repositorio de citas
+      final repository = ref.watch(appointmentRepositoryProvider);
+
+      // Llama al método del repositorio con los parámetros dados
+      // El provider ahora se encarga de la lógica de carga.
+      return repository.getFullyBookedDays(
+        centerId: params.centerId,
+        startDate: params.startDate,
+        endDate: params.endDate,
+      );
     });

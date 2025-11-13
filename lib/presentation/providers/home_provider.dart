@@ -6,11 +6,10 @@ import 'package:latlong2/latlong.dart';
 import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/alert_entity.dart';
 import '../../domain/entities/user_entity.dart';
-import '../../domain/entities/user_impact_entity.dart';
 
 // Provider para obtener el perfil del usuario
 final userProfileProvider = FutureProvider.autoDispose<UserEntity>((ref) {
-  final repository = ref.watch(centersRepositoryProvider);
+  final repository = ref.watch(userRepositoryProvider);
   debugPrint("Provider: Obteniendo perfil de usuario...");
   return repository.getUserProfile();
 });
@@ -19,7 +18,7 @@ final userProfileProvider = FutureProvider.autoDispose<UserEntity>((ref) {
 final nextAppointmentProvider = FutureProvider.autoDispose<AppointmentEntity>((
   ref,
 ) {
-  final repository = ref.watch(centersRepositoryProvider);
+  final repository = ref.watch(appointmentRepositoryProvider);
   debugPrint("Provider: Obteniendo próxima cita...");
   return repository.getNextAppointment();
 });
@@ -28,7 +27,7 @@ final nextAppointmentProvider = FutureProvider.autoDispose<AppointmentEntity>((
 final nearbyAlertsProvider = FutureProvider.autoDispose<List<AlertEntity>>((
   ref,
 ) async {
-  final repository = ref.watch(centersRepositoryProvider);
+  final repository = ref.watch(alertsRepositoryProvider);
   final locationAsync = ref.watch(userLocationProvider);
   debugPrint("Provider: Obteniendo alertas cercanas...");
   try {
@@ -64,28 +63,9 @@ final nearbyAlertsProvider = FutureProvider.autoDispose<List<AlertEntity>>((
   }
 });
 
-// Provider para el impacto del usuario
-final userImpactProvider = FutureProvider.autoDispose<UserImpactEntity>((
-  ref,
-) async {
-  debugPrint("Provider: Obteniendo impacto de usuario...");
-  final repository = ref.watch(centersRepositoryProvider);
-  final impactStats = await repository.getUserImpactStats();
-  final achievements = await repository.getAchievements();
-
-  debugPrint("Provider: Impacto y logros obtenidos.");
-  return UserImpactEntity(
-    livesHelped: impactStats.livesHelped,
-    ranking: impactStats.ranking,
-    // --- COMENTARIO: Se añade totalDonations requerido por el constructor ---
-    totalDonations: impactStats.totalDonations,
-    achievementsCount: achievements.length,
-  );
-});
-
 // Provider para el consejo de donación
 final donationTipProvider = FutureProvider.autoDispose<String>((ref) async {
-  final repository = ref.watch(centersRepositoryProvider);
+  final repository = ref.watch(contentRepositoryProvider);
   debugPrint("Provider: Obteniendo consejo de donación...");
   final tips = await repository.getDonationTips();
   debugPrint(

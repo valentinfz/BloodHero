@@ -1,7 +1,7 @@
+import 'package:bloodhero/presentation/providers/achievement_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../providers/impact_provider.dart';
 
 class ImpactDetailScreen extends ConsumerWidget {
   static const String name = 'impact_detail_screen';

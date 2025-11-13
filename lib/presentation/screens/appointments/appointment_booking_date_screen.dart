@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bloodhero/config/theme/layout_constants.dart';
-import 'package:bloodhero/presentation/providers/repository_providers.dart';
+// Eliminamos la importación directa al repositorio
+// import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:bloodhero/presentation/widgets/shared/app_button.dart';
 import 'appointment_booking_time_screen.dart';
+// Importamos el provider que tiene la clase BookedDaysParams
+import 'package:bloodhero/presentation/providers/appointments_provider.dart';
 
 class AppointmentBookingDateScreen extends ConsumerStatefulWidget {
   static const String name = 'appointment_booking_date_screen';
@@ -26,7 +29,6 @@ class AppointmentBookingDateScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  @override
   ConsumerState<AppointmentBookingDateScreen> createState() =>
       _AppointmentBookingDateScreenState();
 }
@@ -34,24 +36,33 @@ class AppointmentBookingDateScreen extends ConsumerStatefulWidget {
 class _AppointmentBookingDateScreenState
     extends ConsumerState<AppointmentBookingDateScreen> {
   late DateTime selectedDate;
-  Set<DateTime> _fullyBookedDays = <DateTime>{};
-  bool _isLoadingAvailability = false;
-  bool _selectedDateUnavailable = false;
+
+  // --- ELIMINADO ---
+  // Set<DateTime> _fullyBookedDays = <DateTime>{};
+  // bool _isLoadingAvailability = false;
+  // bool _selectedDateUnavailable = false;
+  // La lógica de carga y estado ahora la maneja el provider.
 
   @override
   void initState() {
     super.initState();
     selectedDate = _initialSelectedDate();
-    Future.microtask(_loadFullyBookedDays);
+    // --- ELIMINADO ---
+    // Ya no llamamos a _loadFullyBookedDays() aquí.
+    // El provider se cargará automáticamente en el 'build'.
   }
 
+  // --- CUERPO RESTAURADO ---
   DateTime _initialSelectedDate() {
     final today = DateTime.now();
     final normalizedToday = DateTime(today.year, today.month, today.day);
     final candidate = widget.initialScheduledDate;
     if (candidate != null) {
-      final normalizedCandidate =
-          DateTime(candidate.year, candidate.month, candidate.day);
+      final normalizedCandidate = DateTime(
+        candidate.year,
+        candidate.month,
+        candidate.day,
+      );
       if (_isSelectable(normalizedCandidate, normalizedToday)) {
         return normalizedCandidate;
       }
@@ -59,6 +70,7 @@ class _AppointmentBookingDateScreenState
     return _nextValidDate(normalizedToday);
   }
 
+  // --- CUERPO RESTAURADO ---
   DateTime _nextValidDate(DateTime from) {
     DateTime next = from.add(const Duration(days: 1));
     while (next.weekday == DateTime.sunday) {
@@ -72,86 +84,45 @@ class _AppointmentBookingDateScreenState
 
   DateTime get _normalizedToday => _normalize(DateTime.now());
 
+  // --- CUERPO RESTAURADO ---
   DateTime get _lastSelectableDate {
     final limit = DateTime.now().add(const Duration(days: 60));
     return _normalize(limit);
   }
 
-  Future<void> _loadFullyBookedDays() async {
-    if (!mounted) return;
-    setState(() => _isLoadingAvailability = true);
-    try {
-      final repository = ref.read(centersRepositoryProvider);
-      final startDate = _nextValidDate(_normalizedToday);
-      final endDate = _lastSelectableDate;
-      final result = await repository.getFullyBookedDays(
-        centerId: widget.centerId,
-        startDate: startDate,
-        endDate: endDate,
-      );
-
-      if (!mounted) return;
-      setState(() {
-        var normalizedSelected = _normalize(selectedDate);
-        final blockedDays = result.toSet();
-        final fallback = blockedDays.contains(normalizedSelected)
-            ? _findNextAvailableDate(normalizedSelected, blockedDays)
-            : null;
-
-        if (fallback != null) {
-          selectedDate = fallback;
-          normalizedSelected = _normalize(selectedDate);
-        }
-
-        _selectedDateUnavailable = blockedDays.contains(normalizedSelected);
-        _fullyBookedDays = blockedDays.difference({normalizedSelected});
-        _isLoadingAvailability = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _isLoadingAvailability = false);
+  // --- MODIFICADO ---
+  // Este predicado ahora recibe los días ocupados como parámetro
+  bool _selectableDayPredicate(DateTime day, Set<DateTime> fullyBookedDays) {
+    final normalizedDay = _normalize(day);
+    if (!_isSelectable(normalizedDay, _normalizedToday)) {
+      return false;
     }
+    if (fullyBookedDays.contains(normalizedDay)) {
+      return false;
+    }
+    return true;
   }
 
-  DateTime? _findNextAvailableDate(
-    DateTime from,
-    Set<DateTime> blockedDays,
-  ) {
-    DateTime candidate = from;
-    for (var i = 0; i < 120; i++) {
-      candidate = candidate.add(const Duration(days: 1));
-      if (candidate.isAfter(_lastSelectableDate)) {
-        break;
-      }
-      final normalizedCandidate = _normalize(candidate);
-      if (_isSelectable(normalizedCandidate, _normalizedToday) &&
-          !blockedDays.contains(normalizedCandidate)) {
-        return normalizedCandidate;
-      }
-    }
-    return null;
-  }
-
+  // Helper para verificar si un día es seleccionable (lógica base)
   bool _isSelectable(DateTime date, DateTime normalizedToday) {
     if (!date.isAfter(normalizedToday)) return false;
     if (date.weekday == DateTime.sunday) return false;
     return true;
   }
 
-  bool _selectableDayPredicate(DateTime day) {
-    final normalizedDay = _normalize(day);
-    if (!_isSelectable(normalizedDay, _normalizedToday)) {
-      return false;
-    }
-    if (_fullyBookedDays.contains(normalizedDay)) {
-      return false;
-    }
-    return true;
-  }
-
   @override
   Widget build(BuildContext context) {
     final firstDate = _nextValidDate(_normalizedToday);
+
+    final bookedDaysParams = BookedDaysParams(
+      centerId: widget.centerId,
+      startDate: firstDate,
+      endDate: _lastSelectableDate,
+    );
+    final bookedDaysAsync = ref.watch(
+      fullyBookedDaysProvider(bookedDaysParams),
+    );
+
     return Scaffold(
       appBar: AppBar(title: const Text('Agendar donación · Fecha')),
       body: Padding(
@@ -163,44 +134,117 @@ class _AppointmentBookingDateScreenState
               'Centro: ${widget.centerName}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            if (_isLoadingAvailability)
-              const LinearProgressIndicator(minHeight: 2),
-            const SizedBox(height: 16),
-            CalendarDatePicker(
-              initialDate: selectedDate,
-              firstDate: firstDate,
-              lastDate: _lastSelectableDate,
-              selectableDayPredicate: _selectableDayPredicate,
-              onDateChanged: (value) => setState(
-                () => selectedDate = DateTime(value.year, value.month, value.day),
+
+            // Usamos .when para reaccionar al estado del provider
+            bookedDaysAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: LinearProgressIndicator(minHeight: 2),
               ),
-            ),
-            if (_selectedDateUnavailable)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+              error: (error, stack) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Text(
-                  'No hay horarios disponibles para la fecha seleccionada. Elegí otro día.',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  'Error al cargar días disponibles: $error',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
+              data: (fullyBookedDays) {
+                // Una vez cargados los datos, verificamos si la fecha
+                // seleccionada actualmente sigue siendo válida.
+                final bool selectedDateIsBooked = fullyBookedDays.contains(
+                  _normalize(selectedDate),
+                );
+
+                // Si la fecha seleccionada está ocupada Y NO es la fecha
+                // que venía de una reprogramación, busca la próxima disponible.
+                if (selectedDateIsBooked &&
+                    _normalize(widget.initialScheduledDate ?? DateTime(0)) !=
+                        _normalize(selectedDate)) {
+                  DateTime nextAvailable = _nextValidDate(selectedDate);
+                  while (fullyBookedDays.contains(nextAvailable) ||
+                      !_isSelectable(nextAvailable, _normalizedToday)) {
+                    nextAvailable = nextAvailable.add(const Duration(days: 1));
+                    // Si nos pasamos del límite, paramos
+                    if (nextAvailable.isAfter(_lastSelectableDate)) {
+                      nextAvailable =
+                          selectedDate; // Dejamos la seleccionada original
+                      break;
+                    }
+                  }
+
+                  // Actualizamos 'selectedDate' en el próximo frame
+                  // Usamos microtask para evitar un setState durante el build
+                  Future.microtask(() {
+                    if (mounted) {
+                      setState(() {
+                        selectedDate = nextAvailable;
+                      });
+                    }
+                  });
+                }
+
+                // Volvemos a chequear si la fecha (potencialmente nueva) está ocupada
+                final bool isDateUnavailable = fullyBookedDays.contains(
+                  _normalize(selectedDate),
+                );
+
+                return Column(
+                  children: [
+                    CalendarDatePicker(
+                      initialDate: selectedDate,
+                      firstDate: firstDate,
+                      lastDate: _lastSelectableDate,
+                      // Pasamos los días ocupados al predicado
+                      selectableDayPredicate: (day) =>
+                          _selectableDayPredicate(day, fullyBookedDays),
+                      onDateChanged: (value) => setState(
+                        () => selectedDate = DateTime(
+                          value.year,
+                          value.month,
+                          value.day,
+                        ),
+                      ),
+                    ),
+                    if (isDateUnavailable)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          'No hay horarios disponibles para la fecha seleccionada. Elegí otro día.',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+
             const Spacer(),
+
+            // El botón de continuar se activa/desactiva
+            // según el estado de carga del provider
             AppButton.primary(
               text: 'Continuar con ${selectedDate.day}/${selectedDate.month}',
-              onPressed: _selectedDateUnavailable
+              // Deshabilitado si carga o si (ya cargó y) el día está ocupado
+              onPressed:
+                  bookedDaysAsync.isLoading ||
+                      (bookedDaysAsync.hasValue &&
+                          bookedDaysAsync.value!.contains(
+                            _normalize(selectedDate),
+                          ))
                   ? null
                   : () => context.pushNamed(
-                        AppointmentBookingTimeScreen.name,
-                        extra: {
-                          'centerId': widget.centerId,
-                          'center': widget.centerName,
-                          'date': selectedDate,
-                          'appointmentId': widget.appointmentId,
-                          'donationType': widget.donationType,
-                          'initialTime': widget.initialTime,
-                        },
-                      ),
+                      AppointmentBookingTimeScreen.name,
+                      extra: {
+                        'centerId': widget.centerId,
+                        'center': widget.centerName,
+                        'date': selectedDate,
+                        'appointmentId': widget.appointmentId,
+                        'donationType': widget.donationType,
+                        'initialTime': widget.initialTime,
+                      },
+                    ),
             ),
           ],
         ),

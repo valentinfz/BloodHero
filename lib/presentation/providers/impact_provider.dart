@@ -2,19 +2,12 @@ import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/user_impact_entity.dart';
 import '../../domain/entities/achievement_entity.dart';
-import '../../domain/entities/achievement_detail_entity.dart';
-// Se importa el repositorio para poder usarlo dentro del Notifier.
-import '../../domain/repositories/centers_repository.dart';
+import '../../domain/repositories/impact_repository.dart';
 
-// --- COMENTARIO: Estado para el Notifier de Impacto ---
-// Se crea una clase para manejar los diferentes estados posibles al cargar
-// las estadísticas de impacto: carga inicial, éxito con datos, o error.
 class ImpactState {
+  // ... (código existente de la clase ImpactState)
   final bool isLoading;
   final UserImpactEntity? stats;
-  // --- MEJORA: Se añade la lista de logros al estado ---
-  // Ahora el estado contendrá no solo las estadísticas, sino también la
-  // lista de logros desbloqueados, centralizando toda la información.
   final List<AchievementEntity> achievements;
   final String? error;
 
@@ -39,14 +32,13 @@ class ImpactState {
     );
   }
 }
-// --- FIN DEL ESTADO ---
 
-// --- COMENTARIO: Notifier para las Estadísticas de Impacto ---
-// Este Notifier gestiona el estado (ImpactState) de las estadísticas del usuario.
-// Contiene la lógica para cargar y recargar los datos desde el repositorio.
+// --- NOTIFIER PARA LAS ESTADÍSTICAS DE IMPACTO ---
 class ImpactNotifier extends Notifier<ImpactState> {
-  late final CentersRepository _centersRepository;
+  late final ImpactRepository _impactRepository;
+
   static const List<AchievementLevel> _levels = [
+    // ... (lista de niveles sin cambios)
     AchievementLevel(
       level: 1,
       name: 'Primer Héroe',
@@ -91,8 +83,7 @@ class ImpactNotifier extends Notifier<ImpactState> {
       title: '🕊️ Nivel 5 – Donante Solidario',
       minDonations: 15,
       reward: 'Badge dorada + reconocimiento en ranking local',
-      description:
-          'Sos parte esencial de cada historia que ayudás a escribir.',
+      description: 'Sos parte esencial de cada historia que ayudás a escribir.',
       badgeEmoji: '🕊️',
     ),
     AchievementLevel(
@@ -101,8 +92,7 @@ class ImpactNotifier extends Notifier<ImpactState> {
       title: '🌟 Nivel 6 – Donante Elite',
       minDonations: 20,
       reward: 'Certificado digital + mención en redes / leaderboard',
-      description:
-          'Inspirás a otros a salvar vidas. ¡Gracias por tu ejemplo!',
+      description: 'Inspirás a otros a salvar vidas. ¡Gracias por tu ejemplo!',
       badgeEmoji: '🌟',
     ),
     AchievementLevel(
@@ -119,8 +109,8 @@ class ImpactNotifier extends Notifier<ImpactState> {
 
   @override
   ImpactState build() {
-    _centersRepository = ref.read(centersRepositoryProvider);
-    // Carga inicial asincrónica
+    // CAMBIO: Se lee el provider del repositorio de impacto
+    _impactRepository = ref.read(impactRepositoryProvider);
     Future.microtask(loadImpactStats);
     return ImpactState();
   }
@@ -131,16 +121,15 @@ class ImpactNotifier extends Notifier<ImpactState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // Se obtienen tanto las estadísticas como los logros en paralelo.
+      // CAMBIO: Se usan los métodos del _impactRepository
       final results = await Future.wait([
-        _centersRepository.getUserImpactStats(),
-        _centersRepository.getAchievements(),
+        _impactRepository.getUserImpactStats(),
+        _impactRepository.getAchievements(),
       ]);
 
       final impactStats = results[0] as UserImpactEntity;
       final achievements = results[1] as List<AchievementEntity>;
 
-      // Se actualiza la entidad de impacto con la cuenta de logros.
       final levelInfo = _computeLevel(impactStats.totalDonations);
       final fullStats = UserImpactEntity(
         livesHelped: impactStats.livesHelped,
@@ -152,7 +141,6 @@ class ImpactNotifier extends Notifier<ImpactState> {
         donationsToNextLevel: levelInfo.donationsToNextLevel,
       );
 
-      // Se guarda todo en el estado.
       state = state.copyWith(
         isLoading: false,
         stats: fullStats,
@@ -164,6 +152,7 @@ class ImpactNotifier extends Notifier<ImpactState> {
   }
 
   _LevelResult _computeLevel(int totalDonations) {
+    // ... (código existente de _computeLevel)
     AchievementLevel? current;
     AchievementLevel? next;
     for (final level in _levels) {
@@ -188,6 +177,7 @@ class ImpactNotifier extends Notifier<ImpactState> {
 }
 
 class _LevelResult {
+  // ... (código existente de _LevelResult)
   final AchievementLevel? current;
   final AchievementLevel? next;
   final int donationsToNextLevel;
@@ -200,22 +190,7 @@ class _LevelResult {
 }
 // --- FIN DEL NOTIFIER ---
 
-// --- COMENTARIO: Definición del nuevo StateNotifierProvider ---
-// Este es el provider que la UI observará. Proporciona la instancia
-// del ImpactNotifier y se encarga de su ciclo de vida.
+// --- DEFINICIÓN DEL PROVIDER ---
 final impactProvider = NotifierProvider<ImpactNotifier, ImpactState>(() {
   return ImpactNotifier();
 });
-// --- FIN DEL PROVIDER ---
-
-// --- COMENTARIO: achievementsProvider eliminado ---
-// El FutureProvider 'achievementsProvider' ha sido eliminado. La lista de
-// logros ahora se obtiene a través de 'impactProvider.select((s) => s.achievements)'.
-// Esto centraliza la lógica y evita cargas de datos duplicadas.
-
-// Provider.family para obtener los detalles de UN logro específico por su título
-final achievementDetailProvider = FutureProvider.autoDispose
-    .family<AchievementDetailEntity, String>((ref, achievementTitle) {
-      final repository = ref.watch(centersRepositoryProvider);
-      return repository.getAchievementDetails(achievementTitle);
-    });
