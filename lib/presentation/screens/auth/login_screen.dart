@@ -64,7 +64,12 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 50),
-                  Text('Iniciar sesión', style: textTheme.headlineMedium),
+                  Text(
+                    'Iniciar sesión',
+                    style: textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: kSectionSpacing),
                   CustomTextFormField(
                     labelText: 'Email',
@@ -135,7 +140,9 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                           return;
                         }
                         FocusScope.of(context).unfocus();
-                        ref.read(authProvider.notifier).login(
+                        ref
+                            .read(authProvider.notifier)
+                            .login(
                               _emailController.text.trim(),
                               _passwordController.text.trim(),
                             );

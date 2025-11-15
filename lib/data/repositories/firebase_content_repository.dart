@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bloodhero/domain/repositories/content_repository.dart';
 
@@ -6,13 +7,37 @@ class FirebaseContentRepository implements ContentRepository {
 
   @override
   Future<List<String>> getDonationTips() async {
-    // Podríamos leerlos de una colección 'tips' en Firestore
-    // TODO: Por ahora, se mantiene la lógica fake
-    await Future.delayed(const Duration(milliseconds: 100)); // Simula carga
-    return [
-      'Recordá hidratarte bien antes y después de donar.',
-      'Avisá al personal si te sentís mareado en algún momento.',
-      'Evitá hacer actividad física intensa el día de la donación.',
-    ];
+    try {
+      final querySnapshot = await _firestore
+          .collection('donationTips')
+          .where('deletedAt', isNull: true)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        debugPrint(
+          '[FirebaseContentRepository] No se encontraron documentos en la colección "donationTips".',
+        );
+        return [];
+      }
+
+      final List<String> tips = [];
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        if (data.containsKey('texto') && data['texto'] is String) {
+          tips.add(data['texto'] as String);
+        } else {
+          debugPrint(
+            '[FirebaseContentRepository] Documento ${doc.id} no tiene campo "texto" o no es un String.',
+          );
+        }
+      }
+
+      return tips;
+    } catch (e, s) {
+      debugPrint(
+        '[FirebaseContentRepository] Error al obtener tips: $e\nStackTrace: $s',
+      );
+      return [];
+    }
   }
 }

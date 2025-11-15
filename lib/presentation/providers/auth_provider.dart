@@ -105,14 +105,12 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
-    // El logout no necesita 'runOperation'
     await ref.read(authRepositoryProvider).logout();
   }
 
   Future<void> updateUserProfile(Map<String, dynamic> data) async {
     await _runOperation(
       action: AuthAction.updateProfile,
-      // CAMBIO: Apunta a userRepositoryProvider
       operation: () => ref.read(userRepositoryProvider).updateUserProfile(data),
     );
   }
@@ -120,7 +118,6 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> deleteUserAccount() async {
     await _runOperation(
       action: AuthAction.deleteAccount,
-      // CAMBIO: Apunta a userRepositoryProvider
       operation: () => ref.read(userRepositoryProvider).deleteUserAccount(),
     );
   }

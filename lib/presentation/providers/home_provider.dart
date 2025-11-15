@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:bloodhero/presentation/providers/location_provider.dart';
 import 'package:bloodhero/presentation/providers/repository_providers.dart';
 import 'package:flutter/foundation.dart';
@@ -68,11 +69,20 @@ final donationTipProvider = FutureProvider.autoDispose<String>((ref) async {
   final repository = ref.watch(contentRepositoryProvider);
   debugPrint("Provider: Obteniendo consejo de donación...");
   final tips = await repository.getDonationTips();
-  debugPrint(
-    "Provider: Consejos obtenidos: ${tips.length}. Mostrando el primero.",
-  );
+
   if (tips.isEmpty) {
+    debugPrint("Provider: No se encontraron tips. Mostrando fallback.");
     return '¡Gracias por ser un héroe!';
   }
-  return tips.first;
+
+  // Lógica para seleccionar uno al azar
+  final random = Random();
+  final index = random.nextInt(tips.length);
+  final randomTip = tips[index];
+
+  debugPrint(
+    "Provider: Consejos obtenidos: ${tips.length}. Mostrando el tip $index: \"$randomTip\"",
+  );
+
+  return randomTip;
 });
